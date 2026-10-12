@@ -1,0 +1,8 @@
+Gestor: Ana, na última vez ficou combinado que você revisaria o painel de vendas. Como ficou?
+Ana: Já terminei e publiquei. Os números batem com a base nova.
+Gestor: Ótimo. E aquela documentação das bases que a gente falou?
+Ana: Ainda não comecei, a semana foi corrida. Mas vou escrever a primeira versão até dia 15.
+Gestor: Pode ser. Eu te ajudo revisando quando ficar pronta.
+Ana: Combinado. Outra coisa: eu gostaria de estudar modelagem estatística mais a fundo, queria saber se dá para fazer um curso.
+Gestor: Dá, sim. Me manda duas opções com preço e eu vejo com o RH.
+Ana: Mando até a semana que vem.

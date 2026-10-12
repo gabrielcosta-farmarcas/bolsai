@@ -32,6 +32,12 @@ const isUniqueViolation = (error: unknown): boolean => {
   return error.code === 'P2002';
 };
 
+const isRecordNotFound = (error: unknown): boolean =>
+  error instanceof Error && 'code' in error && error.code === 'P2025';
+
+const isMulterError = (error: unknown): error is Error & { code: string } =>
+  error instanceof Error && error.name === 'MulterError' && 'code' in error;
+
 export const toErrorResponse = (error: unknown): ErrorResponse => {
   if (error instanceof AppError) {
     return {
@@ -61,6 +67,32 @@ export const toErrorResponse = (error: unknown): ErrorResponse => {
           })),
         },
       },
+    };
+  }
+
+  if (isMulterError(error)) {
+    const tooLarge = error.code === 'LIMIT_FILE_SIZE';
+    return {
+      statusCode: tooLarge ? 413 : 400,
+      level: 'warn',
+      body: {
+        error: {
+          code: tooLarge ? 'FILE_TOO_LARGE' : 'UPLOAD_ERROR',
+          message: tooLarge
+            ? 'O arquivo passa do limite de 10 MB.'
+            : 'Não foi possível receber o arquivo.',
+          details: [],
+        },
+      },
+    };
+  }
+
+  // Prisma não achou o registro (por exemplo, é de outra líder): responde como "não encontrado".
+  if (isRecordNotFound(error)) {
+    return {
+      statusCode: 404,
+      level: 'warn',
+      body: { error: { code: 'NOT_FOUND', message: 'Registro não encontrado', details: [] } },
     };
   }
 

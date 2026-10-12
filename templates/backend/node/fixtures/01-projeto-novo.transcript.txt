@@ -1,0 +1,10 @@
+Gestor: Oi, Marina, tudo bem? Como foi a semana?
+Marina: Tudo bem! Corrida, mas boa. Terminei a revisão do fluxo de cadastro e o time de produto gostou bastante.
+Gestor: Que bom. E sobre o projeto novo do aplicativo, você comentou que queria participar mais?
+Marina: Queria sim. Eu acho que posso ajudar a desenhar a navegação desde o começo, em vez de só receber a tela pronta. Mas não sei como entrar nessa conversa.
+Gestor: Faz sentido. Eu posso te apresentar para o Rafael, que lidera o produto, na semana que vem. Aí você mostra o que pensou.
+Marina: Perfeito. Eu preparo uma proposta de escopo de uma página e te mando até sexta, para você ver antes.
+Gestor: Combinado. Me manda até sexta que eu leio no fim de semana.
+Marina: E eu queria falar de outra coisa: tenho sentido que fico sozinha nas revisões de acessibilidade. Ninguém mais do time olha isso.
+Gestor: Boa observação. Vamos pensar em como dividir isso nos próximos meses.
+Marina: Ótimo. No mais, estou animada com o rumo das coisas.

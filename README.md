@@ -1,3 +1,16 @@
+# 🌱 Bonsai
+
+**Cuidado contínuo, crescimento visível.** Copiloto de 1:1 para líderes: prepara o encontro, analisa a transcrição com o histórico e o responsograma de cada pessoa, acompanha combinados e mostra a evolução ao longo do tempo.
+
+- Versão atual: **MVP 1**, só para conversas de teste (sem login e sem camada de segurança; isso vem na Fase 3).
+- Especificação, plano e tarefas: [specs/001-bonsai-mvp1](specs/001-bonsai-mvp1/spec.md).
+- Rodar: `docker compose up -d --build --wait` e abrir http://localhost:3000.
+- A análise por IA usa a chave, o modelo e o prompt cadastrados em **Configurações** (cada líder tem os seus). `ANTHROPIC_API_KEY` e `ANTHROPIC_MODEL` no `.env` são só o padrão de reserva, para quando a líder não configurou nada (nunca faça commit deles). Guardar a chave pela tela exige `SESSION_ENCRYPTION_KEY` no `.env`.
+
+O restante deste arquivo descreve o Golden Path, o padrão de projeto em que o Bonsai foi construído.
+
+---
+
 # 🛤️ Golden Path
 
 **Descreva o que você quer. A IA constrói do jeito certo, na primeira vez.**

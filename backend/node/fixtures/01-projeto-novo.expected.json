@@ -1,0 +1,27 @@
+{
+  "heldOn": "2026-10-01",
+  "mission": null,
+  "responsibilities": [
+    "Desenhar fluxos e navegação das telas do produto, garantindo clareza e consistência para quem usa.",
+    "Garantir a acessibilidade das telas entregues, revisando contraste, leitura e navegação por teclado.",
+    "Comunicar-se com produto e engenharia, alinhando decisões de design e prazos de entrega.",
+    "Ampliar a participação em decisões de produto, contribuindo desde o início dos projetos."
+  ],
+  "history": [],
+  "openAgreements": [],
+  "expectedAgreements": [
+    {
+      "keywords": ["proposta", "escopo"],
+      "owner": "report",
+      "dueDate": "2026-10-02"
+    },
+    {
+      "keywords": ["Rafael"],
+      "owner": "leader",
+      "dueDate": null
+    }
+  ],
+  "maxExtraAgreements": 1,
+  "expectedPrevious": [],
+  "expectedSignalRefs": ["R2", "R4"]
+}

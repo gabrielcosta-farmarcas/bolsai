@@ -72,4 +72,13 @@ describe('toErrorResponse', () => {
       },
     });
   });
+
+  it('deve responder 404 (não 500) quando o Prisma não acha o registro, como o de outra líder', () => {
+    const notFound = Object.assign(new Error('No record found'), { code: 'P2025' });
+
+    const response = toErrorResponse(notFound);
+
+    expect(response.statusCode).toBe(404);
+    expect(response.body.error.code).toBe('NOT_FOUND');
+  });
 });

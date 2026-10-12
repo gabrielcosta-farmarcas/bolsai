@@ -99,7 +99,7 @@ export function InvoiceStatus({ status, onRetry }: InvoiceStatusProps) {
     return (
       <button
         type="button"
-        className="bg-primary text-primary-foreground rounded-md px-3 py-2"
+        className="bg-primary text-on-primary rounded-md px-3 py-2"
         onClick={onRetry}
       >
         Tentar cobrança novamente
@@ -107,7 +107,7 @@ export function InvoiceStatus({ status, onRetry }: InvoiceStatusProps) {
     );
   }
 
-  return <p className="text-foreground">{labelByStatus[status]}</p>;
+  return <p className="text-text">{labelByStatus[status]}</p>;
 }
 ```
 
@@ -175,7 +175,7 @@ A skill `frontend/react/skills/styling-tailwind/SKILL.md` é obrigatória para o
 - Página, feature, UI e layout que aparecem na tela recebem classes Tailwind. Sem CSS por componente e sem `style` para cor, espaçamento ou tipografia.
 - Botão, campo, badge e casca da página são primitivos (`Button`, `TextField`, `StatusBadge`, layout). As classes ficam nesses arquivos, em `components/ui/` e `components/layout/`.
 - Feature e página importam o primitivo. Não copiam a string de classes para recriar o mesmo papel.
-- Cor e raio usam token semântico (`bg-primary`, `text-foreground`, `border-border`, `rounded-md`), definidos no `@theme` da skill de Tailwind.
+- Cor e raio usam token semântico (`bg-primary`, `text-text`, `border-border`, `rounded-md`), definidos no `@theme` da skill de Tailwind.
 
 Tela ou componente novo: termine a estrutura desta skill e aplique o visual na skill de Tailwind antes do checklist.
 

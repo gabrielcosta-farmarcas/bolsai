@@ -1,0 +1,16 @@
+# Keycloak descartável, só para ver o tema Bonsai na sua máquina (não toca no Keycloak da empresa).
+#   docker compose -f infrastructure/keycloak/test/docker-compose.yml up -d
+#   abra http://localhost:8081/realms/bonsai/account  (cai na tela de login com o tema)
+# O tema é lido da pasta (sem gerar o .jar): edite o CSS e recarregue a página.
+name: bonsai-keycloak-test
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4
+    command: start-dev --import-realm
+    environment:
+      KC_HTTP_PORT: 8080
+    ports:
+      - '127.0.0.1:8081:8080'
+    volumes:
+      - ../bonsai-realm.json:/opt/keycloak/data/import/bonsai-realm.json:ro
+      - ../theme/src/theme/bonsai:/opt/keycloak/themes/bonsai:ro

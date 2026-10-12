@@ -34,7 +34,8 @@ Leia esta skill antes de:
 ## Onde o estilo vive
 
 ```text
-src/styles/globals.css    # @import "tailwindcss" e @theme
+src/styles/tokens.css     # tokens do design (cores, tipografia, medidas), claro e escuro
+src/styles/globals.css    # @import "tailwindcss", fontes e base do documento
 src/lib/cn.ts             # clsx + tailwind-merge
 ```
 
@@ -57,35 +58,17 @@ export function cn(...inputs: ClassValue[]) {
 
 ## Tokens
 
-Valores de cor e raio existem só em `src/styles/globals.css`. Componente usa o nome semântico, nunca a escala crua (`bg-white`, `text-gray-500`, `bg-blue-600`).
+Todos os valores (cor, fonte, escala tipográfica, espaçamento, raio, altura de controle, logo) existem só em `src/styles/tokens.css`, cópia do arquivo do design, com tema claro e escuro. Componente usa o nome semântico, nunca a escala crua (`bg-white`, `text-gray-500`, `bg-blue-600`) nem valor fixo. Paleta e regras de marca: [`frontend/BRAND.md`](../../../BRAND.md). Não invente cor.
 
-```css
-@import "tailwindcss";
+Cores (utilitários): `bg`, `surface`, `border`, `border-strong`, `text`, `text-muted`, `primary`, `on-primary`, `primary-subtle`, `accent` (só decorativo), `accent-text`, `accent-subtle`, `liquen`, `success`, `success-subtle`, `warning`, `warning-subtle`, `danger`, `danger-subtle`. Raios: `rounded-sm` 6, `rounded-md` 8 (botões e campos), `rounded-lg` 12 (cards), `rounded-xl` 16 (modais), `rounded-full` (etiquetas, avatar).
 
-@theme {
-  --color-background: #ffffff;
-  --color-foreground: #171717;
-  --color-primary: #171717;
-  --color-primary-foreground: #fafafa;
-  --color-muted: #f5f5f5;
-  --color-muted-foreground: #737373;
-  --color-destructive: #dc2626;
-  --color-destructive-foreground: #fafafa;
-  --color-border: #e5e5e5;
-  --color-ring: #171717;
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-}
-```
+Texto: use as classes da escala (`text-display`, `text-h1`, `text-h2`, `text-h3`, `text-body-lg`, `text-body`, `text-body-sm`, `text-label`, `text-caption`, `text-overline`), nunca `text-sm`/`text-xl`. `h1`–`h3` já têm estilo próprio. Fontes: `font-sans` (Source Sans 3, padrão) e `font-display` (Alegreya Sans 500).
 
-Nomes obrigatórios: `background`, `foreground`, `primary`, `primary-foreground`, `muted`, `muted-foreground`, `destructive`, `destructive-foreground`, `border`, `ring`, `radius-sm`, `radius-md`, `radius-lg`.
+Medidas: `h-[var(--control-h)]` (44 px) e `h-[var(--control-h-sm)]` (36 px) em botões e campos; `min-h-[var(--topbar-h)]`; `max-w-page` e `max-w-reading`. Espaçamento usa a escala do Tailwind (base 4, igual a `--space-*`). Foco vem do `:focus-visible` global (`--focus-ring`): não escreva `ring` nem `outline` por componente.
 
-No JSX: `bg-background`, `text-foreground`, `bg-primary`, `text-primary-foreground`, `bg-muted`, `text-destructive`, `border-border`, `ring-ring`, `rounded-md`.
+Sem sombra e sem gradiente. Valor arbitrário (`p-[13px]`, `text-[#112233]`) só com variável de token (`h-[var(--control-h)]`); cor nova é token novo e exige aprovação da marca.
 
-Espaçamento, tamanho de texto e sombra usam a escala padrão do Tailwind (`gap-2`, `p-4`, `text-sm`). Valor arbitrário (`p-[13px]`, `text-[#112233]`) só entra se o token não existir e o valor for único daquele caso. Cor nova é token novo, não arbitrário.
-
-Tema escuro, quando existir, redefine os mesmos tokens. O componente continua com `bg-background`.
+O tema escuro redefine os mesmos tokens em `tokens.css`; o componente continua com `bg-bg`.
 
 ## Primitivos visuais
 
@@ -111,9 +94,9 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 const buttonVariant = {
-  primary: "bg-primary text-primary-foreground hover:bg-primary/90",
-  ghost: "hover:bg-muted",
-  destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+  primary: "bg-primary text-on-primary hover:bg-primary/90",
+  ghost: "hover:bg-primary-subtle",
+  destructive: "bg-danger text-on-primary hover:bg-danger/90",
 } as const;
 
 type ButtonProps = {
@@ -127,8 +110,7 @@ export function Button({ variant = "primary", className, children }: ButtonProps
     <button
       type="button"
       className={cn(
-        "inline-flex items-center rounded-md px-3 py-2 text-sm font-medium",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "inline-flex h-[var(--control-h)] items-center rounded-md px-4 text-label",
         "disabled:pointer-events-none disabled:opacity-50",
         buttonVariant[variant],
         className,
@@ -140,7 +122,7 @@ export function Button({ variant = "primary", className, children }: ButtonProps
 }
 ```
 
-Ordem dentro do `cn`: layout, espaçamento, tipografia, cor, borda, estado, variante, `className` do pai.
+Ordem dentro do `cn`: layout, espaçamento, tipografia, cor, borda, estado, variante, `className` do pai. O foco não entra aqui: vem do `:focus-visible` global.
 
 ## Layout responsivo
 
@@ -151,20 +133,20 @@ Ordem dentro do `cn`: layout, espaçamento, tipografia, cor, borda, estado, vari
 
 ## Estado visual
 
-- Foco com `focus-visible:ring-2` e `ring-ring`. Não remova o anel sem substituto.
+- Foco vem do `:focus-visible` global (`--focus-ring`). Não o remova.
 - `disabled` no elemento e classes `disabled:pointer-events-none disabled:opacity-50`.
-- Erro de campo com `aria-invalid:` no controle e `text-destructive` na mensagem.
+- Erro de campo com `aria-invalid:` no controle e `text-danger` na mensagem.
 - Cor acompanha texto ou ícone. O significado não fica só na cor.
-- Carregando, vazio e erro, definidos na skill de componentes, usam os tokens `muted` e `destructive`. Não crie cor avulsa para esses estados.
+- Carregando, vazio e erro, definidos na skill de componentes, usam os tokens `text-muted` e `danger`. Não crie cor avulsa para esses estados.
 
 ## Checklist de conclusão
 
-- [ ] Cores e raios vêm dos tokens de `@theme`.
+- [ ] Cores e raios vêm dos tokens de `tokens.css` (e seguem `frontend/BRAND.md`).
 - [ ] Não há `style` inline nem CSS de componente para layout ou cor.
 - [ ] Classes condicionais passam por `cn`.
 - [ ] `variant` e `size` estão no primitivo de UI, não na feature.
 - [ ] Feature não reimplementa botão, campo, badge ou casca com classes copiadas.
-- [ ] Foco visível, disabled e erro usam as variantes acima.
+- [ ] Foco visível (global), disabled e erro usam as variantes acima.
 - [ ] Responsivo é mobile-first, sem largura fixa em conteúdo fluido.
 
 ## Limites desta skill

@@ -1,8 +1,8 @@
 generator client {
-  provider             = "prisma-client"
-  output               = "../src/generated/prisma"
-  moduleFormat         = "esm"
-  importFileExtension  = "js"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
 }
 
 datasource db {
@@ -10,15 +10,275 @@ datasource db {
 }
 
 // PK: UUIDv7 gerado pela aplicação (decisão documentada em database/DATABASE.md).
-// Exclusão lógica: deleted_at. O e-mail é único só entre registros ativos; esse índice
-// parcial vive no SQL da migration (o Prisma não declara índice parcial no schema).
-model User {
-  id        String    @id @default(uuid(7)) @db.Uuid
-  name      String
-  email     String
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(3)
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+// Toda tabela de domínio tem leader_id: na Fase 3 cada líder só enxerga o que é seu.
 
-  @@map("users")
+// Líder fixo do MVP 1: a linha é criada pela migration 20261011120000_leaders.
+model Leader {
+  id              String   @id @default(uuid(7)) @db.Uuid
+  name            String
+  // Identificador da pessoa no Keycloak (claim `sub`); vazio até a primeira entrada.
+  keycloakSubject String?  @unique @map("keycloak_subject")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  directReports    DirectReport[]
+  responsibilities Responsibility[]
+  maps             ResponsibilityMap[]
+  sessions         Session[]
+  analyses         Analysis[]
+  agreements       Agreement[]
+  settings         LeaderSettings?
+
+  @@map("leaders")
+}
+
+enum DirectReportStatus {
+  active
+  inactive
+
+  @@map("direct_report_status")
+}
+
+// Quem escreveu o título da responsabilidade: reserva automática, IA ou a líder (a da líder nunca é sobrescrita).
+enum TitleSource {
+  fallback
+  ai
+  leader
+
+  @@map("title_source")
+}
+
+enum MapFileType {
+  pdf
+  docx
+  text
+
+  @@map("map_file_type")
+}
+
+// Exclusão lógica só aqui: tudo que pertence ao liderado é lido passando por um liderado
+// com deleted_at nulo. O índice parcial (leader_id, status) e a collation pt_br do nome
+// vivem no SQL da migration (o Prisma não os declara).
+model DirectReport {
+  id        String             @id @default(uuid(7)) @db.Uuid
+  leaderId  String             @map("leader_id") @db.Uuid
+  name      String
+  role      String
+  startedAt DateTime           @map("started_at") @db.Date
+  status    DirectReportStatus @default(active)
+  deletedAt DateTime?          @map("deleted_at") @db.Timestamptz(3)
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  leader           Leader              @relation(fields: [leaderId], references: [id])
+  maps             ResponsibilityMap[]
+  responsibilities Responsibility[]
+  sessions         Session[]
+  agreements       Agreement[]
+
+  @@map("direct_reports")
+}
+
+// Versão do responsograma. A vigente é a de maior version. file_bytes é nulo quando o texto foi colado.
+model ResponsibilityMap {
+  id               String      @id @default(uuid(7)) @db.Uuid
+  leaderId         String      @map("leader_id") @db.Uuid
+  directReportId   String      @map("direct_report_id") @db.Uuid
+  version          Int
+  fileName         String?     @map("file_name")
+  fileType         MapFileType @map("file_type")
+  text             String
+  // Seções do responsograma preenchidas na tela; `text` é a junção delas (é o que a IA lê).
+  mission          String?
+  responsibilities String?
+  fileBytes        Bytes?      @map("file_bytes")
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  leader       Leader       @relation(fields: [leaderId], references: [id])
+  directReport DirectReport @relation(fields: [directReportId], references: [id])
+
+  @@unique([directReportId, version])
+  @@map("responsibility_maps")
+}
+
+enum SessionStatus {
+  draft
+  analysed
+  reviewed
+
+  @@map("session_status")
+}
+
+enum AnalysisStatus {
+  processing
+  completed
+  failed
+
+  @@map("analysis_status")
+}
+
+// Um 1:1. A transcrição é dado sensível: nunca vai para log nem para a exportação.
+model Session {
+  id                String        @id @default(uuid(7)) @db.Uuid
+  leaderId          String        @map("leader_id") @db.Uuid
+  directReportId    String        @map("direct_report_id") @db.Uuid
+  heldOn            DateTime      @map("held_on") @db.Date
+  transcript        String
+  status            SessionStatus @default(draft)
+  summaryExportedAt DateTime?     @map("summary_exported_at") @db.Timestamptz(3)
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  leader       Leader       @relation(fields: [leaderId], references: [id])
+  directReport DirectReport @relation(fields: [directReportId], references: [id])
+  analyses     Analysis[]
+  agreements   Agreement[]
+
+  @@index([directReportId, heldOn])
+  @@map("sessions")
+}
+
+// Resultado da IA para uma sessão. A versão final é a que tem reviewed_at preenchido
+// (no máximo uma por sessão: índice único parcial escrito no SQL da migration).
+// raw_json / reviewed_json são o retrato da saída da IA, não entidades: ver data-model.md.
+model Analysis {
+  id             String         @id @default(uuid(7)) @db.Uuid
+  leaderId       String         @map("leader_id") @db.Uuid
+  sessionId      String         @map("session_id") @db.Uuid
+  model          String?
+  status         AnalysisStatus @default(processing)
+  errorMessage   String?        @map("error_message")
+  mapVersionUsed Int?           @map("map_version_used")
+  rawJson        Json?          @map("raw_json")
+  reviewedJson   Json?          @map("reviewed_json")
+  reviewedAt     DateTime?      @map("reviewed_at") @db.Timestamptz(3)
+  inputTokens    Int?           @map("input_tokens")
+  outputTokens   Int?           @map("output_tokens")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  leader     Leader      @relation(fields: [leaderId], references: [id])
+  session    Session     @relation(fields: [sessionId], references: [id])
+  agreements Agreement[]
+
+  @@index([sessionId, createdAt])
+  @@map("analyses")
+}
+
+enum AgreementOwner {
+  leader
+  report
+
+  @@map("agreement_owner")
+}
+
+enum AgreementStatus {
+  open
+  done
+  cancelled
+
+  @@map("agreement_status")
+}
+
+enum AgreementOrigin {
+  ai
+  leader
+
+  @@map("agreement_origin")
+}
+
+// Combinado. Os que a IA acha são salvos sozinhos ao fim da análise (origin ai, confirmed_at nulo)
+// e valem para o próximo encontro. confirmed_at fica preenchido quando o líder edita ou revisa.
+// "Atrasado" não é guardado: é calculado (prazo vencido e status open).
+model Agreement {
+  id              String          @id @default(uuid(7)) @db.Uuid
+  leaderId        String          @map("leader_id") @db.Uuid
+  directReportId  String          @map("direct_report_id") @db.Uuid
+  originSessionId String?         @map("origin_session_id") @db.Uuid
+  analysisId      String?         @map("analysis_id") @db.Uuid
+  description     String
+  owner           AgreementOwner
+  dueDate         DateTime?       @map("due_date") @db.Date
+  status          AgreementStatus @default(open)
+  evidenceExcerpt String?         @map("evidence_excerpt")
+  origin          AgreementOrigin
+  confirmedAt     DateTime?       @map("confirmed_at") @db.Timestamptz(3)
+  closedAt        DateTime?       @map("closed_at") @db.Timestamptz(3)
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  leader        Leader       @relation(fields: [leaderId], references: [id])
+  directReport  DirectReport @relation(fields: [directReportId], references: [id])
+  originSession Session?     @relation(fields: [originSessionId], references: [id])
+  analysis      Analysis?    @relation(fields: [analysisId], references: [id])
+
+  @@index([directReportId, status])
+  @@index([originSessionId])
+  @@map("agreements")
+}
+
+// Sessões de login. O id é o hash SHA-256 do valor do cookie (o valor em si nunca é guardado)
+// e os tokens do Keycloak ficam cifrados (AES-256-GCM) em tokens_enc.
+model AuthSession {
+  id          String   @id
+  subject     String
+  leaderId    String?  @map("leader_id") @db.Uuid
+  kcSid       String?  @map("kc_sid")
+  roles       String[]
+  email       String?
+  name        String?
+  tokensEnc   String   @map("tokens_enc")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastUsedAt  DateTime @default(now()) @map("last_used_at") @db.Timestamptz(3)
+  refreshedAt DateTime @default(now()) @map("refreshed_at") @db.Timestamptz(3)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(3)
+
+  @@index([kcSid])
+  @@index([subject])
+  @@index([expiresAt])
+  @@map("auth_sessions")
+}
+
+// Uma responsabilidade do responsograma de uma pessoa (um campo preenchido). O histórico acompanha o texto
+// (key = texto normalizado), não a posição. Aposentada (retired_at) = saiu de uma versão do responsograma.
+model Responsibility {
+  id             String      @id @default(uuid(7)) @db.Uuid
+  leaderId       String      @map("leader_id") @db.Uuid
+  directReportId String      @map("direct_report_id") @db.Uuid
+  position       Int
+  text           String
+  title          String
+  titleSource    TitleSource @default(fallback) @map("title_source")
+  key            String
+  retiredAt      DateTime?   @map("retired_at") @db.Timestamptz(3)
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  leader       Leader       @relation(fields: [leaderId], references: [id])
+  directReport DirectReport @relation(fields: [directReportId], references: [id])
+
+  @@unique([directReportId, key])
+  @@index([directReportId, retiredAt])
+  @@index([leaderId])
+  @@map("responsibilities")
+}
+
+// Configurações de IA da líder (uma linha por líder). Chave de API cifrada (AES-256-GCM); só os 4
+// últimos caracteres ficam em claro, para a tela mostrar "•••• 4f2a". Nulo = usar o padrão da instalação.
+// analysis_prompt nulo = usar o prompt padrão (arquivo prompts/analysis-1on1.md).
+model LeaderSettings {
+  id              String    @id @default(uuid(7)) @db.Uuid
+  leaderId        String    @unique @map("leader_id") @db.Uuid
+  apiKeyEnc       String?   @map("api_key_enc")
+  apiKeyLast4     String?   @map("api_key_last4")
+  apiKeyUpdatedAt DateTime? @map("api_key_updated_at") @db.Timestamptz(3)
+  model           String?
+  analysisPrompt  String?   @map("analysis_prompt")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  leader Leader @relation(fields: [leaderId], references: [id])
+
+  @@map("leader_settings")
 }

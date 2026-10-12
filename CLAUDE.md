@@ -13,6 +13,9 @@ Antes de mexer em Docker, leia `infrastructure/docker/DOCKER.md` e a skill do as
 
 Atalhos: `/subir-ambiente` e `/parar-ambiente`.
 
+## Identidade visual
+Todo texto, cor, fonte, logo e componente de tela segue `frontend/BRAND.md` (Bonsai, direção "Camadas"). Tokens só em `frontend/react/src/styles/tokens.css`; logo só pelo componente `<Logo />`. O que não estiver coberto, pergunte antes de criar.
+
 ## Spec Kit é obrigatório
 Para criar uma aplicação ou funcionalidade nova, **não escreva código antes de passar pelo Spec Kit**: `specify` → `plan` → `tasks` → `implement`, pedindo aprovação da pessoa ao fim de cada etapa. Leia `SPECKIT.md` e as regras em `.specify/memory/constitution.md`. Decisões técnicas são do agente (avise o que escolheu e por quê, em linguagem simples). Perguntas só de negócio, no máximo 2 por etapa.
 - Se a pessoa não digitou os comandos `/speckit-*`, conduza você mesmo: leia o `SKILL.md` da etapa em `.claude/skills/speckit-<etapa>/` e siga.

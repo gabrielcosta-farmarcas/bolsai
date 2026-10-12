@@ -1,0 +1,8 @@
+Gestor: E aí, Carlos, como estão as coisas?
+Carlos: Tranquilo. Estou focado na migração do módulo de pagamentos, deve levar mais umas duas semanas.
+Gestor: Algum bloqueio?
+Carlos: Nada grave. A documentação antiga é confusa, mas vou me virando.
+Gestor: Beleza. Qualquer coisa me avisa.
+Carlos: Aviso sim. Fora isso, o time está bem alinhado.
+Gestor: Ótimo. Foi só isso então?
+Carlos: Foi, sim.

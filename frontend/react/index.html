@@ -3,10 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Golden Path</title>
+    <title>Bonsai</title>
+    <script>
+      try {
+        var t = localStorage.getItem('bonsai-theme');
+        if (t === 'dark' || t === 'light') document.documentElement.classList.add(t);
+      } catch (e) {}
+    </script>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/brand/favicon-16.svg"
+      media="(prefers-color-scheme: light)"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/brand/favicon-16-escuro.svg"
+      media="(prefers-color-scheme: dark)"
+    />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#F6F5F1" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#131715" media="(prefers-color-scheme: dark)" />
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

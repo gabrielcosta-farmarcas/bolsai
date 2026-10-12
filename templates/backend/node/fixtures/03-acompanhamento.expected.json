@@ -1,0 +1,58 @@
+{
+  "heldOn": "2026-10-01",
+  "mission": null,
+  "responsibilities": [
+    "Garantir a qualidade dos dados usados nas análises, tratando inconsistências nas bases.",
+    "Construir análises e painéis que apoiem as decisões das áreas parceiras.",
+    "Comunicar resultados às áreas parceiras de forma clara e no prazo combinado.",
+    "Desenvolver-se tecnicamente em modelagem estatística e automação de análises."
+  ],
+  "history": [
+    {
+      "heldOn": "2026-09-10",
+      "summary": "Conversa sobre a carga de trabalho e sobre o painel de vendas, que precisava de revisão."
+    }
+  ],
+  "openAgreements": [
+    {
+      "id": "c-100",
+      "description": "Revisar o painel de vendas",
+      "owner": "report",
+      "dueDate": "2026-09-24"
+    },
+    {
+      "id": "c-101",
+      "description": "Escrever a documentação das bases de dados",
+      "owner": "report",
+      "dueDate": null
+    }
+  ],
+  "expectedAgreements": [
+    {
+      "keywords": ["curso"],
+      "owner": "report",
+      "dueDate": null
+    },
+    {
+      "keywords": ["RH"],
+      "owner": "leader",
+      "dueDate": null
+    },
+    {
+      "keywords": ["revis", "documenta"],
+      "owner": "leader",
+      "dueDate": null
+    }
+  ],
+  "maxExtraAgreements": 0,
+  "expectedPrevious": [
+    {
+      "id": "c-100",
+      "status": "done"
+    },
+    {
+      "id": "c-101",
+      "status": "in_progress"
+    }
+  ]
+}

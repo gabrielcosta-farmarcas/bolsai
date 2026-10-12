@@ -1,0 +1,326 @@
+/* Tema de login do Bonsai ("Camadas"). Valores copiados de frontend/react/src/styles/tokens.css
+   (frontend/BRAND.md): se a marca mudar, atualize aqui também. Sem sombras, sem gradientes. */
+
+@font-face {
+  font-family: 'Alegreya Sans';
+  font-weight: 500;
+  font-display: swap;
+  src: url('../fonts/alegreya-sans-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Source Sans 3';
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/source-sans-3-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Source Sans 3';
+  font-weight: 600;
+  font-display: swap;
+  src: url('../fonts/source-sans-3-latin-600-normal.woff2') format('woff2');
+}
+
+:root {
+  --b-primary: #2e5a4c;
+  --b-on-primary: #ffffff;
+  --b-primary-subtle: #e4ece7;
+  --b-bg: #f6f5f1;
+  --b-surface: #ffffff;
+  --b-border: #dedbd2;
+  --b-border-strong: #8c928d;
+  --b-text: #1d2420;
+  --b-text-muted: #5c655f;
+  --b-danger: #b03a35;
+  --b-danger-subtle: #f6e2e0;
+  --b-success: #3c7a3e;
+  --b-success-subtle: #e3eedf;
+  --b-warning: #9a6200;
+  --b-warning-subtle: #f6ebd3;
+  --b-focus: 0 0 0 3px rgba(46, 90, 76, 0.35);
+  --b-font-display: 'Alegreya Sans', 'Source Sans 3', system-ui, sans-serif;
+  --b-font-body: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --b-primary: #8cc2ae;
+    --b-on-primary: #10201a;
+    --b-primary-subtle: #22302a;
+    --b-bg: #131715;
+    --b-surface: #1b201e;
+    --b-border: #2c3330;
+    --b-border-strong: #67716b;
+    --b-text: #e7eae6;
+    --b-text-muted: #a2aba5;
+    --b-danger: #f08c84;
+    --b-danger-subtle: #3a2120;
+    --b-success: #8fcb8a;
+    --b-success-subtle: #1f3020;
+    --b-warning: #e2b15a;
+    --b-warning-subtle: #362b17;
+    --b-focus: 0 0 0 3px rgba(140, 194, 174, 0.45);
+  }
+}
+
+/* ---------- Página ---------- */
+html,
+body,
+.pf-v5-c-login {
+  background: var(--b-bg) !important;
+  background-image: none !important;
+  color: var(--b-text);
+  font-family: var(--b-font-body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.pf-v5-c-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.pf-v5-c-login__container {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* ---------- Marca: logo vertical + frase ---------- */
+.pf-v5-c-login__header {
+  margin: 0 0 24px;
+  text-align: center;
+}
+
+#kc-header-wrapper {
+  /* O texto "Bonsai" fica para leitores de tela; o que se vê é o logo. */
+  font-size: 0;
+  color: transparent;
+  min-height: 88px;
+  width: 100%;
+  background: url('../img/bonsai-logo.svg') center top / 67px 88px no-repeat;
+}
+
+#kc-header-wrapper::after {
+  content: 'cuidado contínuo, crescimento visível';
+  display: block;
+  padding-top: 108px;
+  font-family: var(--b-font-body);
+  font-size: 17px;
+  line-height: 1.55;
+  font-weight: 400;
+  color: var(--b-text-muted);
+  text-align: center;
+}
+
+/* ---------- Cartão ---------- */
+.pf-v5-c-login__main {
+  background: var(--b-surface);
+  border: 1px solid var(--b-border);
+  border-radius: 16px;
+  box-shadow: none;
+  padding: 40px;
+  margin: 0;
+  max-width: none;
+}
+
+.pf-v5-c-login__main-header,
+.pf-v5-c-login__main-body,
+.pf-v5-c-login__main-footer {
+  padding: 0;
+  margin: 0;
+}
+
+.pf-v5-c-login__main-header {
+  margin-bottom: 24px;
+}
+
+.pf-v5-c-login__main-footer {
+  margin-top: 24px;
+}
+
+/* Rodapés sem conteúdo não ocupam espaço. */
+.pf-v5-c-login__main-footer:not(:has(*)) {
+  display: none;
+}
+
+#kc-page-title,
+.pf-v5-c-title {
+  font-family: var(--b-font-display);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+  color: var(--b-text);
+}
+
+/* ---------- Formulário ---------- */
+.pf-v5-c-form__label,
+.pf-v5-c-form__label-text {
+  font-family: var(--b-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--b-text);
+}
+
+.pf-v5-c-form-control {
+  height: 44px;
+  background: var(--b-surface);
+  border: 1px solid var(--b-border-strong);
+  border-radius: 8px;
+  overflow: hidden;
+  --pf-v5-c-form-control--BorderColor: transparent;
+}
+
+.pf-v5-c-form-control::before,
+.pf-v5-c-form-control::after {
+  display: none !important;
+  border: 0 !important;
+}
+
+.pf-v5-c-form-control input {
+  height: 100%;
+  padding: 0 12px;
+  background: transparent;
+  color: var(--b-text);
+  font-family: var(--b-font-body);
+  font-size: 15px;
+  border: 0;
+}
+
+.pf-v5-c-form-control:focus-within {
+  box-shadow: var(--b-focus);
+  border-color: var(--b-primary);
+}
+
+.pf-v5-c-form-control[aria-invalid='true'],
+.pf-v5-c-form-control:has(input[aria-invalid='true']) {
+  border-color: var(--b-danger);
+}
+
+.pf-v5-c-input-group {
+  align-items: stretch;
+  gap: 8px;
+}
+
+.pf-v5-c-input-group .pf-v5-c-form-control {
+  width: 100%;
+}
+
+/* Botão de mostrar a senha */
+.pf-v5-c-button.pf-m-control {
+  height: 44px;
+  width: 44px;
+  background: var(--b-surface);
+  color: var(--b-text);
+  border: 1px solid var(--b-border-strong);
+  border-radius: 8px;
+}
+
+.pf-v5-c-button.pf-m-control:hover {
+  background: var(--b-primary-subtle);
+}
+
+/* ---------- Botões ---------- */
+.pf-v5-c-button {
+  font-family: var(--b-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.pf-v5-c-button.pf-m-primary {
+  min-height: 44px;
+  background: var(--b-primary);
+  color: var(--b-on-primary);
+  border: 0;
+}
+
+.pf-v5-c-button.pf-m-primary:hover,
+.pf-v5-c-button.pf-m-primary:focus {
+  background: var(--b-primary);
+  opacity: 0.9;
+}
+
+.pf-v5-c-button.pf-m-secondary,
+.pf-v5-c-button.pf-m-tertiary,
+.pf-v5-c-button.pf-m-link {
+  min-height: 44px;
+  color: var(--b-primary);
+  background: transparent;
+  border: 1px solid var(--b-border-strong);
+}
+
+.pf-v5-c-button::before,
+.pf-v5-c-button::after {
+  border-radius: 8px;
+}
+
+a,
+.pf-v5-c-button.pf-m-link {
+  color: var(--b-primary);
+}
+
+a:hover {
+  color: var(--b-text);
+}
+
+:focus-visible {
+  outline: none !important;
+  box-shadow: var(--b-focus);
+}
+
+/* ---------- Avisos ---------- */
+.pf-v5-c-alert {
+  --pf-v5-c-alert--BorderTopColor: var(--b-border);
+  background: var(--b-surface);
+  border: 1px solid var(--b-border);
+  border-radius: 12px;
+  box-shadow: none;
+  color: var(--b-text);
+}
+
+.pf-v5-c-alert.pf-m-danger {
+  background: var(--b-danger-subtle);
+  border-color: var(--b-danger);
+}
+
+.pf-v5-c-alert.pf-m-success {
+  background: var(--b-success-subtle);
+  border-color: var(--b-success);
+}
+
+.pf-v5-c-alert.pf-m-warning {
+  background: var(--b-warning-subtle);
+  border-color: var(--b-warning);
+}
+
+.pf-v5-c-alert__title,
+.pf-v5-c-alert__description {
+  color: var(--b-text);
+  font-family: var(--b-font-body);
+}
+
+.pf-v5-c-helper-text__item-text.pf-m-error,
+.pf-m-error {
+  color: var(--b-danger);
+}
+
+/* ---------- Celular ---------- */
+@media (max-width: 480px) {
+  .pf-v5-c-login {
+    padding: 24px 12px;
+    align-items: flex-start;
+  }
+
+  .pf-v5-c-login__main {
+    padding: 24px;
+  }
+}

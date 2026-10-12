@@ -43,6 +43,7 @@ Schema, migration e seed nascem nas skills de banco. A skill de API consome o ba
 ## Interface — React
 
 Guia: `frontend/FRONTEND.MD`  
+Identidade visual obrigatória (Bonsai, "Camadas"): `frontend/BRAND.md`  
 Contexto extra: `frontend/README.md`
 
 Abra este contexto ao criar ou alterar tela, componente, página, hook, estado ou visual.

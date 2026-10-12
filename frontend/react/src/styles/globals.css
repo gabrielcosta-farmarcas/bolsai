@@ -1,0 +1,101 @@
+@import 'tailwindcss';
+@import '@fontsource/alegreya-sans/500.css';
+@import '@fontsource/source-sans-3/400.css';
+@import '@fontsource/source-sans-3/600.css';
+@import './tokens.css';
+
+/* Base e estilos de texto: conteúdo do tokens.css do design, dentro de camadas do Tailwind. */
+@layer base {
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  a {
+    color: var(--color-primary);
+  }
+  a:hover {
+    color: var(--color-text);
+  }
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  h1 {
+    font: var(--fw-medium) var(--fs-h1) / var(--lh-h1) var(--font-display);
+    letter-spacing: var(--tracking-tight);
+  }
+  h2 {
+    font: var(--fw-medium) var(--fs-h2) / var(--lh-h2) var(--font-display);
+  }
+  h3 {
+    font: var(--fw-medium) var(--fs-h3) / var(--lh-h3) var(--font-display);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .text-display {
+    font: var(--fw-medium) var(--fs-display)/var(--lh-display) var(--font-display);
+    letter-spacing: var(--tracking-tight);
+  }
+  .text-h1 {
+    font: var(--fw-medium) var(--fs-h1)/var(--lh-h1) var(--font-display);
+    letter-spacing: var(--tracking-tight);
+  }
+  .text-h2 {
+    font: var(--fw-medium) var(--fs-h2)/var(--lh-h2) var(--font-display);
+  }
+  .text-h3 {
+    font: var(--fw-medium) var(--fs-h3)/var(--lh-h3) var(--font-display);
+  }
+  .text-body-lg {
+    font: var(--fw-regular) var(--fs-body-lg)/var(--lh-body-lg) var(--font-body);
+  }
+  .text-body {
+    font: var(--fw-regular) var(--fs-body)/var(--lh-body) var(--font-body);
+  }
+  .text-body-sm {
+    font: var(--fw-regular) var(--fs-body-sm)/var(--lh-body-sm) var(--font-body);
+  }
+  .text-label {
+    font: var(--fw-semibold) var(--fs-label)/var(--lh-label) var(--font-body);
+  }
+  .text-caption {
+    font: var(--fw-regular) var(--fs-caption)/var(--lh-caption) var(--font-body);
+    color: var(--color-text-muted);
+  }
+  .text-overline {
+    font: var(--fw-semibold) var(--fs-overline)/var(--lh-overline) var(--font-body);
+    letter-spacing: var(--tracking-overline);
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+}
+
+/* Loading da marca: cada copa pulsa de leve, uma depois da outra. */
+@keyframes bonsai-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+.bonsai-pulse {
+  animation: bonsai-pulse 1.2s ease-in-out infinite;
+}
