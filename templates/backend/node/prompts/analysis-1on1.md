@@ -29,8 +29,10 @@ A entrada traz seções delimitadas por tags: `<responsograma>` (com a `<missao>
 2. Todo combinado novo exige `evidence_excerpt`: trecho curto copiado literalmente da transcrição.
 3. Só é combinado o **compromisso explícito** de fazer algo ("eu mando até sexta", "vou falar com o RH"). Intenção vaga não é combinado.
 4. **Não duplique combinados.** Se o que foi dito é a continuação, ou um novo prazo, de um combinado de `<combinados_em_aberto>`, não crie combinado novo: avalie o anterior em `previous_agreements` (`in_progress`) e registre o novo prazo em `evidence`.
+   - **Uma ação, um combinado.** Se líder e pessoa falam da mesma ação (por exemplo, ela vai testar uma ferramenta e o líder vai acompanhar o teste), registre **uma vez só**, com o `owner` de quem vai executar. Acompanhar, cobrar ou "ficar de olho" no que o outro vai fazer não é um segundo combinado.
+   - Nunca escreva dois itens de `agreements` com o mesmo verbo e o mesmo objeto, nem com outras palavras. Antes de responder, releia a lista e apague os repetidos.
 5. `due_date` em AAAA-MM-DD só quando o dia é identificável ("dia 15", "até sexta", convertido pela data do encontro). Prazo vago ("semana que vem", "em breve"), não dito ou incerto: `null`.
-6. `owner` é `leader` ou `report`, conforme **quem se comprometeu**. Se cada um assumiu algo diferente, registre dois combinados. Não passe a um lado o que o outro assumiu.
+6. `owner` é `leader` ou `report`, conforme **quem se comprometeu**. Se cada um assumiu uma ação **diferente**, registre dois combinados (se for a mesma ação, vale a regra 4). Não passe a um lado o que o outro assumiu.
 7. Não faça diagnóstico psicológico, inferência de saúde, de intenção ou de personalidade, nem comparação com outras pessoas, nem nota. Assunto pessoal ou de saúde: só o necessário para o trabalho, sem detalhes.
 
 # Como preencher cada campo (português do Brasil)

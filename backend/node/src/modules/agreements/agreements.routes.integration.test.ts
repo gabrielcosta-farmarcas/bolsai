@@ -121,21 +121,50 @@ describe('agreements', () => {
     expect(byReport.body).toHaveLength(2);
   });
 
+  it('deve descartar combinados repetidos: na própria análise e de um encontro anterior ainda em aberto', async () => {
+    const ctx = setup([
+      output([
+        agreement('Testar o Impulso corrigido na próxima agenda do 1:1.'),
+        agreement('Testar o Impulso corrigido, com a próxima agenda já caminhando.'),
+        agreement('Enviar o plano de carreira revisado ao gestor'),
+      ]),
+      output([
+        agreement('Testar o Impulso corrigido antes da próxima agenda.'),
+        agreement('Marcar o curso de liderança para o próximo trimestre'),
+      ]),
+    ]);
+    const reportId = await createReport(ctx.app);
+    const first = await createSession(ctx.app, reportId, '2026-10-01');
+    await analyse(ctx, first);
+
+    expect((await listSession(ctx.app, first)).map((item) => item.description).sort()).toEqual([
+      'Enviar o plano de carreira revisado ao gestor',
+      'Testar o Impulso corrigido na próxima agenda do 1:1.',
+    ]);
+
+    const second = await createSession(ctx.app, reportId, '2026-10-08');
+    await analyse(ctx, second);
+
+    expect((await listSession(ctx.app, second)).map((item) => item.description)).toEqual([
+      'Marcar o curso de liderança para o próximo trimestre',
+    ]);
+  });
+
   it('deve confirmar ao editar e, ao reanalisar, trocar só os da IA que ninguém tocou', async () => {
     const ctx = setup([
-      output([agreement('Combinado A'), agreement('Combinado B')]),
-      output([agreement('Combinado C')]),
+      output([agreement('Enviar a proposta ao cliente'), agreement('Marcar o curso de liderança')]),
+      output([agreement('Revisar o contrato com o jurídico')]),
     ]);
     const reportId = await createReport(ctx.app);
     const sessionId = await createSession(ctx.app, reportId, '2026-10-01');
     await analyse(ctx, sessionId);
 
     const [first] = (await listSession(ctx.app, sessionId)).filter(
-      (item) => item.description === 'Combinado A',
+      (item) => item.description === 'Enviar a proposta ao cliente',
     );
     const edited = await authed(ctx.app)
       .patch(`/api/v1/agreements/${first?.id}`)
-      .send({ description: 'Combinado A (ajustado)', dueDate: '2026-10-20' });
+      .send({ description: 'Enviar a proposta ao cliente (ajustada)', dueDate: '2026-10-20' });
     expect(edited.body).toMatchObject({ isConfirmed: true, dueDate: '2026-10-20' });
     const manual = await authed(ctx.app)
       .post(`/api/v1/direct-reports/${reportId}/agreements`)
@@ -148,7 +177,11 @@ describe('agreements', () => {
     const descriptions = (await listSession(ctx.app, sessionId))
       .map((item) => item.description)
       .sort();
-    expect(descriptions).toEqual(['Combinado A (ajustado)', 'Combinado C', 'Feito à mão']);
+    expect(descriptions).toEqual([
+      'Enviar a proposta ao cliente (ajustada)',
+      'Feito à mão',
+      'Revisar o contrato com o jurídico',
+    ]);
   });
 
   it('deve seguir a revisão ao salvá-la e não mexer nos combinados ao reanalisar um encontro revisado', async () => {

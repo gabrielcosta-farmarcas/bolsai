@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { fromCalendarDate } from '../../shared/dates.js';
 import type { AnalysisOutput, ReviewedAnalysis } from '../analyses/analysis.schema.js';
+import { dropRepeatedActions } from './similarity.js';
 
 // Escritas de combinados que acontecem dentro da transação de uma análise (concluir ou revisar).
 type Tx = Prisma.TransactionClient;
@@ -25,9 +26,21 @@ export async function saveAiAgreements(
   await tx.agreement.deleteMany({
     where: { originSessionId: scope.sessionId, origin: 'ai', confirmedAt: null },
   });
-  if (items.length > 0) {
+
+  // Rede de segurança contra modelos que repetem: some o que repete outro item da própria análise
+  // ou um combinado ainda em aberto desta pessoa (os concluídos podem voltar a ser combinados).
+  const open = await tx.agreement.findMany({
+    where: { leaderId: scope.leaderId, directReportId: scope.directReportId, status: 'open' },
+    select: { description: true },
+  });
+  const { kept } = dropRepeatedActions(
+    items,
+    open.map((row) => row.description),
+  );
+
+  if (kept.length > 0) {
     await tx.agreement.createMany({
-      data: items.map((item) => ({
+      data: kept.map((item) => ({
         leaderId: scope.leaderId,
         directReportId: scope.directReportId,
         originSessionId: scope.sessionId,
