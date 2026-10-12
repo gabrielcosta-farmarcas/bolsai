@@ -57,6 +57,9 @@ services:
     build:
       context: ./frontend/react
     restart: unless-stopped
+    # Porta em que o nginx escuta; o Coolify roteia o domínio para ela.
+    expose:
+      - "8080"
     environment:
       # O Coolify cria o domínio para esta porta (defina-o na tela do serviço).
       SERVICE_FQDN_WEB_8080: ""
