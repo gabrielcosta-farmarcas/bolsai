@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
-import { Dialog } from '@/components/ui/Dialog';
+import { Avatar } from '@/components/ui/Avatar';
 import { Loading } from '@/components/ui/Loading';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import {
-  AnalysisCompare,
-  AnalysisPicker,
   ReviewEditor,
   TranscriptPane,
   agreementEvidenceKey,
@@ -44,9 +42,7 @@ export function SessionPage() {
   const save = useSaveReview(id);
 
   const [selectedId, setSelectedId] = useState<string>();
-  const [compareId, setCompareId] = useState<string>();
   const [activeEvidence, setActiveEvidence] = useState<string>();
-  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
 
   const list = analyses.data ?? [];
   const finalAnalysis = list.find((item) => item.isFinal);
@@ -107,21 +103,27 @@ export function SessionPage() {
 
   return (
     <div className="flex flex-col lg:h-full lg:min-h-0">
-      <header className="bg-bg border-border flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b px-6 py-4 md:px-8">
-        <div>
-          <p className="text-body-sm">
-            <Link
-              to={`/pessoas/${session.data.directReportId}`}
-              className="text-primary underline underline-offset-4"
-            >
-              {report.data?.name ?? 'Voltar'}
-            </Link>
-          </p>
-          <div className="mt-1 flex flex-wrap items-center gap-3">
-            <h1 className="text-h2">Encontro de {formatCalendarDate(session.data.heldOn)}</h1>
-            {session.data.status === 'reviewed' ? (
-              <StatusBadge tone="growth">Revisado</StatusBadge>
-            ) : null}
+      <header className="bg-bg border-border flex flex-wrap items-center justify-between gap-x-6 gap-y-4 border-b px-6 py-5 md:px-8">
+        <div className="flex items-center gap-4">
+          <Avatar name={report.data?.name ?? ''} className="size-14 text-h3" />
+          <div>
+            <h1 className="text-h1">
+              <Link
+                to={`/pessoas/${session.data.directReportId}`}
+                className="rounded-md underline-offset-4 hover:underline"
+              >
+                {report.data?.name ?? 'Voltar para a pessoa'}
+              </Link>
+            </h1>
+            <p className="text-text-muted mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span>
+                {report.data?.role ? `${report.data.role} · ` : ''}
+                Encontro de {formatCalendarDate(session.data.heldOn)}
+              </span>
+              {session.data.status === 'reviewed' ? (
+                <StatusBadge tone="growth">Revisado</StatusBadge>
+              ) : null}
+            </p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -136,11 +138,6 @@ export function SessionPage() {
                   : 'pronta'}
               {current.isFinal ? ' · versão final' : ''}
             </span>
-          ) : null}
-          {list.length > 0 ? (
-            <Button variant="secondary" size="sm" onClick={() => setIsSwitcherOpen(true)}>
-              Trocar ou comparar
-            </Button>
           ) : null}
           <Button
             variant={list.length === 0 ? 'primary' : 'secondary'}
@@ -237,32 +234,6 @@ export function SessionPage() {
           ) : null}
         </section>
       </div>
-
-      <Dialog
-        isOpen={isSwitcherOpen}
-        title="Análises deste encontro"
-        onClose={() => setIsSwitcherOpen(false)}
-      >
-        <div className="grid gap-6">
-          <AnalysisPicker
-            analyses={list}
-            selectedId={effectiveId}
-            onSelect={(analysisId) => {
-              setSelectedId(analysisId);
-              setIsSwitcherOpen(false);
-            }}
-          />
-          {effectiveId ? (
-            <AnalysisCompare
-              analyses={list}
-              currentId={effectiveId}
-              otherId={compareId}
-              onChangeOther={setCompareId}
-              responsibilities={responsibilityOptions}
-            />
-          ) : null}
-        </div>
-      </Dialog>
     </div>
   );
 }
