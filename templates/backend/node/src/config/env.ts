@@ -31,6 +31,9 @@ const envSchema = z.object({
   SESSION_ENCRYPTION_KEY: encryptionKey,
   // Endereço público da tela (o navegador fala só com ele; a API fica atrás do mesmo endereço).
   APP_BASE_URL: z.string().url().default('http://localhost:3000'),
+  // Quantos servidores intermediários (proxies) ficam entre o navegador e a API. 0 = nenhum (local).
+  // Na hospedagem são 2 (proxy do Coolify + nginx da tela): assim o limite de tentativas conta o IP real.
+  TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(0),
 });
 
 // Em teste os valores de login são fixos (o Keycloak é simulado); nunca vão para outro ambiente.

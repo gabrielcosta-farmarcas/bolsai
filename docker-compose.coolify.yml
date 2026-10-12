@@ -1,0 +1,74 @@
+# Bonsai em produção (Coolify): tela (nginx), API e banco. Só a tela recebe domínio; a API e o banco
+# ficam na rede interna, sem porta publicada. Guia: infrastructure/coolify/README.md.
+#
+# Variáveis geradas pelo Coolify (não digite): SERVICE_USER_POSTGRES, SERVICE_PASSWORD_POSTGRES.
+# Variáveis que você cola no Coolify: KEYCLOAK_CLIENT_SECRET e SESSION_ENCRYPTION_KEY (obrigatórias).
+name: bonsai
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "${SERVICE_USER_POSTGRES:?o Coolify gera esta variável}"
+      POSTGRES_PASSWORD: "${SERVICE_PASSWORD_POSTGRES:?o Coolify gera esta variável}"
+      POSTGRES_DB: bonsai
+      # UTF8 só vale na primeira criação do volume (database/DATABASE.md).
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend/node
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: "postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/bonsai"
+      # Endereço público (o mesmo cadastrado no Keycloak).
+      APP_BASE_URL: "${APP_BASE_URL:-https://bonsai.coolify.radar.farmarcas.com.br}"
+      KEYCLOAK_ISSUER: "${KEYCLOAK_ISSUER:-https://auth.coolify.radar.farmarcas.com.br/realms/bonsai}"
+      KEYCLOAK_CLIENT_ID: "${KEYCLOAK_CLIENT_ID:-bonsai-web}"
+      KEYCLOAK_CLIENT_SECRET: "${KEYCLOAK_CLIENT_SECRET:?cole o segredo do cliente bonsai-web do Keycloak}"
+      # 32 bytes em base64: openssl rand -base64 32. Guarde uma cópia: se mudar, sessões e chaves salvas deixam de abrir.
+      SESSION_ENCRYPTION_KEY: "${SESSION_ENCRYPTION_KEY:?gere com openssl rand -base64 32}"
+      # Proxies na frente da API: o do Coolify + o nginx da tela.
+      TRUST_PROXY: "${TRUST_PROXY:-2}"
+      TRANSCRIPT_MAX_CHARS: "${TRANSCRIPT_MAX_CHARS:-200000}"
+      # Padrão de reserva; a líder cadastra a chave e o modelo dela em Configurações.
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      ANTHROPIC_MODEL: "${ANTHROPIC_MODEL:-}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/health/ready >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  web:
+    build:
+      context: ./frontend/react
+    restart: unless-stopped
+    environment:
+      # O Coolify cria o domínio para esta porta (defina-o na tela do serviço).
+      SERVICE_FQDN_WEB_8080: ""
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+volumes:
+  postgres_data:

@@ -126,4 +126,4 @@ Estes assuntos ainda não têm procedimento. Se o pedido depender deles, diga is
 - Autenticação, JWT, senha, CORS, rate limit e auditoria de dependências.
 - Teste de rota Python com banco (TestClient). O teste unitário do service Python continua em `python-api-development`.
 - Banco não relacional.
-- Imagem de produção, registry e orquestração fora da máquina local.
+- Registry de imagens e orquestração além do Coolify. (A publicação no Coolify está coberta por `infrastructure/coolify/README.md` e `specs/008-hospedagem-coolify/`.)

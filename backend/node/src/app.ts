@@ -72,6 +72,7 @@ const defaultOidc = (): OidcProvider =>
 export const createApp = (deps: AppDeps = {}) => {
   const app = express();
   app.disable('x-powered-by');
+  if (env.TRUST_PROXY > 0) app.set('trust proxy', env.TRUST_PROXY);
   app.use(securityHeaders());
   app.use(express.json());
   app.use(requestId);
