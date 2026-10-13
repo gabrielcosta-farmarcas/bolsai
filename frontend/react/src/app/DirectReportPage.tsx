@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { ButtonLink } from '@/components/ui/ButtonLink';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -30,6 +30,7 @@ const VALID_TABS = ['encontros', 'combinados', 'linha-do-tempo', 'responsograma'
 export function DirectReportPage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const report = useDirectReport(id);
   const update = useUpdateDirectReport(id);
   const remove = useDeleteDirectReport(id);
@@ -76,6 +77,12 @@ export function DirectReportPage() {
           Pessoas
         </Link>
       </p>
+
+      {(location.state as { sessionDeleted?: boolean } | null)?.sessionDeleted ? (
+        <p role="status" className="bg-primary-subtle text-body-sm mt-3 rounded-lg p-3">
+          Encontro apagado.
+        </p>
+      ) : null}
 
       {isEditing ? (
         <div className="mt-6">

@@ -69,7 +69,8 @@ export const analysesRepository: AnalysesRepository = {
   },
 
   async markFailed(id, message) {
-    await prisma.analysis.update({
+    // updateMany: se o encontro foi apagado no meio da análise, não há o que marcar (e não é erro).
+    await prisma.analysis.updateMany({
       where: { id },
       data: { status: 'failed', errorMessage: message },
     });

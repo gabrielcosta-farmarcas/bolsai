@@ -57,3 +57,20 @@ export function useSessionSummary(sessionId: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: sessionKeys.detail(sessionId) }),
   });
 }
+
+// Apaga o encontro e tudo que saiu dele (análises e combinados). Limpa o que a tela guardou dele.
+export function useDeleteSession(sessionId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiFetch<void>(`/api/v1/sessions/${sessionId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: sessionKeys.detail(sessionId) });
+      queryClient.removeQueries({ queryKey: ['analyses'] });
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['sessions'] }),
+        queryClient.invalidateQueries({ queryKey: ['agreements'] }),
+        queryClient.invalidateQueries({ queryKey: ['timeline'] }),
+      ]);
+    },
+  });
+}

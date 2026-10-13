@@ -33,6 +33,8 @@ export type SessionsRepository = {
     id: string,
     data: { heldOn?: string; transcript?: string },
   ) => Promise<SessionRecord>;
+  // Apaga de vez o encontro, as análises e os combinados nascidos nele (tudo ou nada).
+  remove: (leaderId: string, id: string) => Promise<void>;
 };
 
 type ReportsLookup = {
@@ -138,6 +140,11 @@ export const makeSessionsService = ({ repo, reports, parse, config }: Deps) => {
           : {}),
       };
       return toDetailDto(await repo.update(user.leaderId, id, data));
+    },
+
+    async remove(user: CurrentUser, id: string) {
+      await requireSession(user, id);
+      await repo.remove(user.leaderId, id);
     },
   };
 };

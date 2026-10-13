@@ -27,6 +27,7 @@ const setup = (reportExists = true) => {
     listByReport: vi.fn().mockResolvedValue([]),
     findById: vi.fn().mockResolvedValue(record()),
     update: vi.fn().mockResolvedValue(record()),
+    remove: vi.fn().mockResolvedValue(undefined),
   };
   const reports = {
     findById: vi
@@ -137,5 +138,23 @@ describe('sessions service — leitura e edição', () => {
     await expect(service.update(user, 's1', { transcript: '  ' })).rejects.toMatchObject({
       code: 'EMPTY_TRANSCRIPT',
     });
+  });
+});
+
+describe('sessions service — remove', () => {
+  it('deve apagar o encontro do líder', async () => {
+    const { service, repo } = setup();
+
+    await service.remove(user, 's1');
+
+    expect(repo.remove).toHaveBeenCalledWith(FIXED_LEADER_ID, 's1');
+  });
+
+  it('deve dar 404 e não apagar quando o encontro não é visível', async () => {
+    const { service, repo } = setup();
+    vi.mocked(repo.findById).mockResolvedValue(null);
+
+    await expect(service.remove(user, 's1')).rejects.toBeInstanceOf(NotFoundError);
+    expect(repo.remove).not.toHaveBeenCalled();
   });
 });

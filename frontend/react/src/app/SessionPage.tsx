@@ -18,7 +18,7 @@ import {
 import { useReportAgreements, useSessionAgreements } from '@/features/agreements';
 import { useDirectReport } from '@/features/direct-reports';
 import { useResponsibilities } from '@/features/responsibilities';
-import { SummaryActions, useSession } from '@/features/sessions';
+import { DeleteSessionButton, SummaryActions, useSession } from '@/features/sessions';
 import { formatCalendarDate } from '@/lib/format';
 
 export function SessionPage() {
@@ -147,6 +147,7 @@ export function SessionPage() {
           >
             {list.length === 0 ? 'Analisar' : 'Analisar de novo'}
           </Button>
+          <DeleteSessionButton sessionId={id} directReportId={session.data.directReportId} />
         </div>
       </header>
 
