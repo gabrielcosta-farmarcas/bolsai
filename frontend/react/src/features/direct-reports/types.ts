@@ -21,6 +21,7 @@ export type DirectReportInput = {
   // Só no cadastro: viram a versão 1 do responsograma (de 3 a 10 responsabilidades, uma por campo).
   mission?: string;
   responsibilities?: string[];
+  behaviors?: string;
 };
 
 // Uma versão do responsograma. `responsibilities` é a lista numerada, uma por linha, só para exibir.
@@ -29,10 +30,22 @@ export type ResponsibilityMap = {
   version: number;
   isCurrent: boolean;
   mission: string | null;
+  behaviors: string | null;
   responsibilities: string | null;
   createdAt: string;
 };
 
-export type MapSave = { mission: string; responsibilities: string[] };
+export type MapSave = { mission: string; behaviors: string; responsibilities: string[] };
+
+// Limite do campo "Comportamentos desejados" (a API recusa acima disso).
+export const MAX_BEHAVIORS_LENGTH = 3000;
+
+// Mensagem de erro quando o texto passa do limite; vazio quando está dentro.
+export const behaviorsError = (value: string): string | undefined => {
+  const over = value.trim().length - MAX_BEHAVIORS_LENGTH;
+  return over > 0
+    ? `Passou ${over} caractere${over === 1 ? '' : 's'} do limite de ${MAX_BEHAVIORS_LENGTH}.`
+    : undefined;
+};
 
 export type StatusFilter = DirectReportStatus | 'all';

@@ -14,7 +14,7 @@ import {
   type Responsibility,
 } from '@/features/responsibilities';
 import { formatDateTime } from '@/lib/format';
-import type { MapSave, ResponsibilityMap } from '../types';
+import { behaviorsError, type MapSave, type ResponsibilityMap } from '../types';
 
 type ResponsibilityMapSectionProps = {
   maps: ResponsibilityMap[] | undefined;
@@ -33,6 +33,7 @@ type ResponsibilityMapSectionProps = {
 
 type MapFormProps = {
   initialMission: string;
+  initialBehaviors: string;
   initialResponsibilities: string[];
   isSaving: boolean;
   saveError?: string;
@@ -43,6 +44,7 @@ type MapFormProps = {
 // Nova versão: parte da versão vigente (para editar só o que mudou) ou de um arquivo.
 function MapForm({
   initialMission,
+  initialBehaviors,
   initialResponsibilities,
   isSaving,
   saveError,
@@ -50,15 +52,23 @@ function MapForm({
   onExtract,
 }: MapFormProps) {
   const [mission, setMission] = useState(initialMission);
+  const [behaviors, setBehaviors] = useState(initialBehaviors);
   const [values, setValues] = useState(initialResponsibilities);
   const [error, setError] = useState<string>();
+  const [behaviorsMessage, setBehaviorsMessage] = useState<string>();
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const message = rulesMessage(values);
+    const tooLong = behaviorsError(behaviors);
     setError(message);
-    if (message) return;
-    onSave({ mission: mission.trim(), responsibilities: filledTexts(values) });
+    setBehaviorsMessage(tooLong);
+    if (message || tooLong) return;
+    onSave({
+      mission: mission.trim(),
+      behaviors: behaviors.trim(),
+      responsibilities: filledTexts(values),
+    });
   };
 
   return (
@@ -85,6 +95,13 @@ function MapForm({
           }}
         />
         <ResponsibilityFields values={values} onChange={setValues} errorMessage={error} />
+        <TextAreaField
+          label="Comportamentos desejados (opcional)"
+          rows={4}
+          value={behaviors}
+          onChange={(event) => setBehaviors(event.target.value)}
+          errorMessage={behaviorsMessage}
+        />
         {saveError ? (
           <p role="alert" className="text-danger text-body-sm">
             {saveError}
@@ -167,7 +184,7 @@ export function ResponsibilityMapSection({
                     {formatDateTime(map.createdAt)}
                   </span>
                 </div>
-                {map.mission || map.responsibilities ? (
+                {map.mission || map.responsibilities || map.behaviors ? (
                   <details>
                     <summary className="text-label cursor-pointer">Ver conteúdo</summary>
                     <div className="mt-3 grid gap-3">
@@ -183,6 +200,12 @@ export function ResponsibilityMapSection({
                           <p className="whitespace-pre-line">{map.responsibilities}</p>
                         </div>
                       ) : null}
+                      {map.behaviors ? (
+                        <div>
+                          <p className="text-caption">Comportamentos desejados</p>
+                          <p className="whitespace-pre-line">{map.behaviors}</p>
+                        </div>
+                      ) : null}
                     </div>
                   </details>
                 ) : null}
@@ -196,6 +219,7 @@ export function ResponsibilityMapSection({
         <MapForm
           key={`${current?.id ?? 'sem-versao'}-${active.map((item) => item.id).join(',')}`}
           initialMission={current?.mission ?? ''}
+          initialBehaviors={current?.behaviors ?? ''}
           initialResponsibilities={
             active.length > 0 ? fieldsFrom(active.map((item) => item.text)) : emptyFields()
           }

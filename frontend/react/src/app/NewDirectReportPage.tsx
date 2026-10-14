@@ -22,6 +22,7 @@ export function NewDirectReportPage() {
             startedAt: '',
             status: 'active',
             mission: '',
+            behaviors: '',
             responsibilities: emptyFields(),
           }}
           submitLabel="Salvar"

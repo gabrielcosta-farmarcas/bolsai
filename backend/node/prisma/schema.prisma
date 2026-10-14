@@ -90,6 +90,8 @@ model ResponsibilityMap {
   text             String
   // Seções do responsograma preenchidas na tela; `text` é a junção delas (é o que a IA lê).
   mission          String?
+  // Comportamentos desejados do cargo (texto livre, opcional); valem para esta versão.
+  behaviors        String?
   responsibilities String?
   fileBytes        Bytes?      @map("file_bytes")
   createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)

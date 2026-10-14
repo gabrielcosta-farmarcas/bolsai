@@ -19,6 +19,7 @@ export type MapRecord = {
   version: number;
   text: string;
   mission: string | null;
+  behaviors: string | null;
   responsibilities: string | null;
   createdAt: Date;
 };
@@ -26,6 +27,7 @@ export type MapRecord = {
 export type NewMapVersion = {
   text: string;
   mission: string | null;
+  behaviors: string | null;
   // Lista numerada das responsabilidades, para mostrar o conteúdo de cada versão.
   responsibilities: string;
   items: CheckedResponsibility[];
@@ -45,7 +47,12 @@ export type ResponsibilityMapsRepository = {
   findCurrent: (
     leaderId: string,
     directReportId: string,
-  ) => Promise<{ version: number; text: string; mission: string | null } | null>;
+  ) => Promise<{
+    version: number;
+    text: string;
+    mission: string | null;
+    behaviors: string | null;
+  } | null>;
 };
 
 type ReportsLookup = {
@@ -55,13 +62,14 @@ type ReportsLookup = {
   ) => Promise<Pick<DirectReportRecord, 'id' | 'leaderId'> | null>;
 };
 
-export type MapInput = { mission?: string; responsibilities: string[] };
+export type MapInput = { mission?: string; behaviors?: string; responsibilities: string[] };
 
 export type MapDto = {
   id: string;
   version: number;
   isCurrent: boolean;
   mission: string | null;
+  behaviors: string | null;
   responsibilities: string | null;
   createdAt: string;
 };
@@ -78,6 +86,7 @@ const toDto = (record: MapRecord, isCurrent: boolean): MapDto => ({
   version: record.version,
   isCurrent,
   mission: record.mission,
+  behaviors: record.behaviors,
   responsibilities: record.responsibilities,
   createdAt: record.createdAt.toISOString(),
 });
@@ -104,9 +113,15 @@ export const makeResponsibilityMapsService = ({ repo, reports, extract, titles }
 
       const { items, duplicates } = checkResponsibilities(input.responsibilities);
       const mission = input.mission?.trim() || null;
+      const behaviors = input.behaviors?.trim() || null;
       const created = await repo.createNextVersion(user.leaderId, directReportId, {
-        text: composeMapText({ mission, responsibilities: composeResponsibilities(items) }),
+        text: composeMapText({
+          mission,
+          responsibilities: composeResponsibilities(items),
+          behaviors,
+        }),
         mission,
+        behaviors,
         responsibilities: composeResponsibilities(items),
         items,
       });

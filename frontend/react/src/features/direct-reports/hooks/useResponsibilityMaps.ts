@@ -13,7 +13,7 @@ export function useResponsibilityMaps(directReportId: string) {
   });
 }
 
-// Salva uma nova versão do responsograma (missão + lista de responsabilidades).
+// Salva uma nova versão do responsograma (missão, responsabilidades e comportamentos desejados).
 export function useSaveResponsibilityMap(directReportId: string) {
   const queryClient = useQueryClient();
   return useMutation({

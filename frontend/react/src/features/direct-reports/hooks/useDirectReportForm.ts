@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { filledTexts, rulesMessage } from '@/features/responsibilities';
-import type { DirectReportInput } from '../types';
+import { behaviorsError, type DirectReportInput } from '../types';
 
-type FieldErrors = Partial<Record<'name' | 'role' | 'startedAt' | 'responsibilities', string>>;
+type FieldErrors = Partial<
+  Record<'name' | 'role' | 'startedAt' | 'responsibilities' | 'behaviors', string>
+>;
 
 const REQUIRED_MESSAGE = 'Preencha este campo.';
 
@@ -16,6 +18,8 @@ const validate = (values: DirectReportInput): FieldErrors => {
     const message = rulesMessage(values.responsibilities);
     if (message) errors.responsibilities = message;
   }
+  const behaviors = behaviorsError(values.behaviors ?? '');
+  if (behaviors) errors.behaviors = behaviors;
   return errors;
 };
 
@@ -39,6 +43,7 @@ export function useDirectReportForm(
         ...values,
         name: values.name.trim(),
         role: values.role.trim(),
+        ...(values.behaviors !== undefined ? { behaviors: values.behaviors.trim() } : {}),
         ...(values.responsibilities
           ? { responsibilities: filledTexts(values.responsibilities) }
           : {}),

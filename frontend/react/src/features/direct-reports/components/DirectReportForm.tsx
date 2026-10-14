@@ -21,7 +21,7 @@ type DirectReportFormProps = {
   submitLabel: string;
   isSubmitting: boolean;
   errorMessage?: string;
-  // No cadastro: mostra a Missão e os campos de Responsabilidades (mínimo 3), que viram a versão 1 do responsograma.
+  // No cadastro: mostra a Missão, os campos de Responsabilidades (mínimo 3) e os Comportamentos desejados, que viram a versão 1 do responsograma.
   showResponsibilityMap?: boolean;
   // Lê um arquivo e devolve uma proposta para os campos (sem salvar). Sem isto, o botão não aparece.
   onExtract?: (file: File) => Promise<Proposal>;
@@ -94,6 +94,13 @@ export function DirectReportForm({
               values={values.responsibilities}
               onChange={(next) => setField('responsibilities', next)}
               errorMessage={errors.responsibilities}
+            />
+            <TextAreaField
+              label="Comportamentos desejados (opcional)"
+              rows={4}
+              value={values.behaviors ?? ''}
+              onChange={(event) => setField('behaviors', event.target.value)}
+              errorMessage={errors.behaviors}
             />
           </fieldset>
         ) : null}

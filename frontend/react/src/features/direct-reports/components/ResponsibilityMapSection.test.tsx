@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Responsibility } from '@/features/responsibilities';
 import { ResponsibilityMapSection } from './ResponsibilityMapSection';
@@ -9,6 +9,7 @@ const map = (overrides: Partial<ResponsibilityMap> = {}): ResponsibilityMap => (
   version: 1,
   isCurrent: true,
   mission: 'Garantir o sucesso do cliente',
+  behaviors: null,
   responsibilities: '1. Atender os clientes\n2. Registrar no CRM\n3. Validar as entregas',
   createdAt: '2026-10-01T15:00:00.000Z',
   ...overrides,
@@ -64,6 +65,7 @@ describe('ResponsibilityMapSection', () => {
 
     expect(onSave).toHaveBeenCalledWith({
       mission: 'Garantir o sucesso do cliente',
+      behaviors: '',
       responsibilities: [
         'Atender os clientes',
         'Registrar no CRM',
@@ -71,6 +73,45 @@ describe('ResponsibilityMapSection', () => {
         'Acompanhar as implementações',
       ],
     });
+  });
+
+  it('deve mostrar e editar os comportamentos desejados da versão vigente', async () => {
+    const { onSave } = renderSection({
+      maps: [map({ behaviors: 'Pensamento crítico\nEmpatia' })],
+    });
+
+    const field = screen.getByLabelText('Comportamentos desejados (opcional)');
+    expect(field).toHaveValue('Pensamento crítico\nEmpatia');
+    await userEvent.type(field, '\nCuriosidade');
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar nova versão' }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ behaviors: 'Pensamento crítico\nEmpatia\nCuriosidade' }),
+    );
+  });
+
+  it('deve mostrar os comportamentos de cada versão no conteúdo, e nada quando a versão não tem', () => {
+    renderSection({
+      maps: [
+        map({ id: 'm2', version: 2, behaviors: 'Visão sistêmica' }),
+        map({ id: 'm1', version: 1, isCurrent: false, behaviors: null }),
+      ],
+    });
+
+    expect(screen.getAllByText('Comportamentos desejados')).toHaveLength(1);
+    expect(screen.getAllByText('Visão sistêmica').length).toBeGreaterThan(0);
+  });
+
+  it('não deve salvar comportamentos acima de 3.000 caracteres e deve dizer quanto passou', async () => {
+    const { onSave } = renderSection();
+    fireEvent.change(screen.getByLabelText('Comportamentos desejados (opcional)'), {
+      target: { value: 'a'.repeat(3005) },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar nova versão' }));
+
+    expect(screen.getByText('Passou 5 caracteres do limite de 3000.')).toBeInTheDocument();
+    expect(onSave).not.toHaveBeenCalled();
   });
 
   it('não deve salvar com menos de 3 e deve dizer quantas faltam', async () => {

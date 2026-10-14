@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { responsibilityListSchema } from '../responsibilities/responsibilities.schemas.js';
+import { MAX_BEHAVIORS_LENGTH } from '../responsibility-maps/responsibility-maps.schemas.js';
 
 const MAX_TEXT_LENGTH = 120;
 const MAX_PAGE_SIZE = 100;
@@ -22,6 +23,7 @@ export const createDirectReportSchema = z
     // Responsograma inicial: a missão é opcional; as responsabilidades (de 3 a 10) são obrigatórias.
     // As regras com mensagem em português ficam em checkResponsibilities (service).
     mission: z.string().max(MAX_MAP_SECTION).optional(),
+    behaviors: z.string().max(MAX_BEHAVIORS_LENGTH).optional(),
     responsibilities: responsibilityListSchema,
   })
   .strict();

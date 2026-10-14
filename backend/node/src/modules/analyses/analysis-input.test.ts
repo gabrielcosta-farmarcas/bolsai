@@ -58,6 +58,32 @@ describe('buildAnalysisInput — responsograma', () => {
     expect(without).not.toContain('<missao>');
   });
 
+  it('deve incluir os comportamentos desejados depois das responsabilidades, só quando existem', () => {
+    const withBehaviors = buildAnalysisInput({
+      ...base,
+      map: {
+        version: 1,
+        mission: null,
+        behaviors: ' Pensamento crítico\nEmpatia ',
+        responsibilities,
+      },
+    });
+    const without = buildAnalysisInput({
+      ...base,
+      map: { version: 1, mission: null, behaviors: '  ', responsibilities },
+    });
+    const legacy = buildAnalysisInput({
+      ...base,
+      map: { version: 1, mission: null, responsibilities },
+    });
+
+    expect(withBehaviors).toContain(
+      '</responsabilidades>\n<comportamentos_desejados>\nPensamento crítico\nEmpatia\n</comportamentos_desejados>\n</responsograma>',
+    );
+    expect(without).not.toContain('<comportamentos_desejados>');
+    expect(legacy).not.toContain('<comportamentos_desejados>');
+  });
+
   it('deve manter a transcrição, o histórico e os combinados em aberto em seções separadas', () => {
     const input = buildAnalysisInput({
       ...base,

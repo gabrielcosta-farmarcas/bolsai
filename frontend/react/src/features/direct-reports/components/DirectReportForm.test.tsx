@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { emptyFields } from '@/features/responsibilities';
 import { DirectReportForm } from './DirectReportForm';
@@ -105,6 +105,27 @@ describe('DirectReportForm', () => {
           mission: 'Apoiar clientes',
           responsibilities: ['Atender os clientes', 'Registrar no CRM', 'Validar as entregas'],
         }),
+      );
+    });
+
+    it('deve enviar os comportamentos desejados aparados e recusar acima de 3.000 caracteres', async () => {
+      const onSubmit = setup();
+      await userEvent.type(screen.getByLabelText('Nome'), 'Ana');
+      await userEvent.type(screen.getByLabelText('Cargo'), 'Analista');
+      await userEvent.type(screen.getByLabelText('Responsabilidade 1'), 'Atender os clientes');
+      await userEvent.type(screen.getByLabelText('Responsabilidade 2'), 'Registrar no CRM');
+      await userEvent.type(screen.getByLabelText('Responsabilidade 3'), 'Validar as entregas');
+      const field = screen.getByLabelText('Comportamentos desejados (opcional)');
+
+      fireEvent.change(field, { target: { value: 'a'.repeat(3002) } });
+      await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+      expect(screen.getByText('Passou 2 caracteres do limite de 3000.')).toBeInTheDocument();
+      expect(onSubmit).not.toHaveBeenCalled();
+
+      fireEvent.change(field, { target: { value: '  Empatia\nCuriosidade ' } });
+      await userEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ behaviors: 'Empatia\nCuriosidade' }),
       );
     });
 

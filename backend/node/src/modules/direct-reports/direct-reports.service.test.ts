@@ -97,6 +97,7 @@ describe('makeDirectReportsService.create', () => {
       status: 'active',
       initialMap: {
         mission: 'Garantir o sucesso do cliente',
+        behaviors: null,
         responsibilities: '1. Atender os clientes\n2. Registrar no CRM\n3. Validar as entregas',
         text: 'MISSÃO / FINALIDADE DO CARGO\nGarantir o sucesso do cliente\n\nRESPONSABILIDADES\n1. Atender os clientes\n2. Registrar no CRM\n3. Validar as entregas',
         items: [
@@ -107,6 +108,20 @@ describe('makeDirectReportsService.create', () => {
       },
     });
     expect(result.id).toBe('r1');
+  });
+
+  it('deve guardar os comportamentos desejados na versão 1 (aparados) e incluí-los no texto', async () => {
+    const repo = makeRepo({ create: vi.fn().mockResolvedValue(record()) });
+
+    await makeDirectReportsService(repo).create(user, {
+      ...person,
+      behaviors: '  Empatia\nCuriosidade  ',
+      responsibilities: ['Atender os clientes', 'Registrar no CRM', 'Validar as entregas'],
+    });
+
+    const sent = vi.mocked(repo.create).mock.calls[0]?.[1];
+    expect(sent?.initialMap.behaviors).toBe('Empatia\nCuriosidade');
+    expect(sent?.initialMap.text).toContain('COMPORTAMENTOS DESEJADOS\nEmpatia\nCuriosidade');
   });
 
   it('deve funcionar sem missão', async () => {

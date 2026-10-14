@@ -1,15 +1,18 @@
 import { z } from 'zod';
 import { responsibilityListSchema } from '../responsibilities/responsibilities.schemas.js';
 
+export const MAX_BEHAVIORS_LENGTH = 3000;
+
 const emptyObject = z.object({}).strict();
 
 export const reportIdParamsSchema = z.object({ id: z.string().uuid() }).strict();
 export const mapIdParamsSchema = z.object({ id: z.string().uuid() }).strict();
 
-// A nova versão traz a missão (opcional) e a lista de responsabilidades (as regras de 3 a 10 ficam no service).
+// A nova versão traz a missão e os comportamentos desejados (opcionais) e a lista de responsabilidades (as regras de 3 a 10 ficam no service).
 export const createMapBodySchema = z
   .object({
     mission: z.string().max(50_000).optional(),
+    behaviors: z.string().max(MAX_BEHAVIORS_LENGTH).optional(),
     responsibilities: responsibilityListSchema,
   })
   .strict();

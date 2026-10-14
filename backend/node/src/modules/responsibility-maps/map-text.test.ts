@@ -21,6 +21,12 @@ describe('composeMapText', () => {
     );
   });
 
+  it('deve incluir os comportamentos desejados depois das responsabilidades', () => {
+    expect(
+      composeMapText({ responsibilities: '1. Onboarding', behaviors: ' Empatia\nCuriosidade ' }),
+    ).toBe('RESPONSABILIDADES\n1. Onboarding\n\nCOMPORTAMENTOS DESEJADOS\nEmpatia\nCuriosidade');
+  });
+
   it('deve incluir só a seção preenchida', () => {
     expect(composeMapText({ responsibilities: 'Atender clientes' })).toBe(
       'RESPONSABILIDADES\nAtender clientes',

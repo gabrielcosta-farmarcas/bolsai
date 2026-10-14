@@ -10,6 +10,7 @@ const select = {
   version: true,
   text: true,
   mission: true,
+  behaviors: true,
   responsibilities: true,
   createdAt: true,
 } as const;
@@ -38,6 +39,7 @@ export const responsibilityMapsRepository: ResponsibilityMapsRepository = {
           fileType: 'text',
           text: data.text,
           mission: data.mission,
+          behaviors: data.behaviors,
           responsibilities: data.responsibilities,
         },
         select,
@@ -63,7 +65,7 @@ export const responsibilityMapsRepository: ResponsibilityMapsRepository = {
   findCurrent(leaderId, directReportId) {
     return prisma.responsibilityMap.findFirst({
       where: { ...visibleFor(leaderId), directReportId },
-      select: { version: true, text: true, mission: true },
+      select: { version: true, text: true, mission: true, behaviors: true },
       orderBy: { version: 'desc' },
     });
   },

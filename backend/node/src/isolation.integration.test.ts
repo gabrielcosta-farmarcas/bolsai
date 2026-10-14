@@ -296,6 +296,7 @@ describe('isolamento entre líderes', () => {
         responsibilityMapsRepository.createNextVersion(leaderB, ids.report, {
           text: 'x',
           mission: null,
+          behaviors: null,
           responsibilities: '1. a',
           items: [{ text: 'Atender os clientes', key: 'atender os clientes' }],
         }),

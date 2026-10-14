@@ -65,6 +65,7 @@ export const directReportsRepository: DirectReportsRepository = {
             fileType: 'text',
             text: input.initialMap.text,
             mission: input.initialMap.mission,
+            behaviors: input.initialMap.behaviors,
             responsibilities: input.initialMap.responsibilities,
           },
         },

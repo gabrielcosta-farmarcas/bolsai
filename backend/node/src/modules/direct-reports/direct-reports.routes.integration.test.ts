@@ -176,6 +176,28 @@ describe('responsograma no cadastro', () => {
     expect(list.body[0].title.endsWith('…')).toBe(true);
   });
 
+  it('deve guardar os comportamentos desejados na versão 1 e devolvê-los no histórico', async () => {
+    const created = await authed(app)
+      .post(REPORTS)
+      .send(newPersonBody({ behaviors: 'Pensamento crítico\nBoa comunicação' }));
+    expect(created.status).toBe(201);
+
+    const maps = (await authed(app).get(`${REPORTS}/${created.body.id}/responsibility-maps`)).body;
+    expect(maps[0]).toMatchObject({ version: 1, behaviors: 'Pensamento crítico\nBoa comunicação' });
+    const detail = await authed(app).get(`/api/v1/responsibility-maps/${maps[0].id}`);
+    expect(detail.body.text).toContain('COMPORTAMENTOS DESEJADOS\nPensamento crítico');
+  });
+
+  it('deve recusar comportamentos acima de 3.000 caracteres', async () => {
+    const response = await authed(app)
+      .post(REPORTS)
+      .send(newPersonBody({ behaviors: 'a'.repeat(3001) }));
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe('VALIDATION_ERROR');
+    expect(await prisma.directReport.count()).toBe(0);
+  });
+
   it('não deve criar a pessoa com menos de 3 responsabilidades, nem com mais de 10', async () => {
     const few = await authed(app)
       .post(REPORTS)
@@ -224,6 +246,27 @@ describe('responsibility maps — versões e histórico', () => {
     ).body as Array<{ id: string; text: string; position: number; retired: boolean }>;
     return Object.fromEntries(list.map((item) => [item.text, item]));
   };
+
+  it('deve criar nova versão ao mudar só os comportamentos, sem mexer nas responsabilidades', async () => {
+    const report = await createReport({ behaviors: 'Empatia' });
+    const url = `${REPORTS}/${report.id}/responsibility-maps`;
+    const before = await idsByText(report.id);
+
+    const second = await authed(app)
+      .post(url)
+      .send({ behaviors: 'Empatia\nVisão sistêmica', responsibilities: sampleResponsibilities });
+    expect(second.status).toBe(201);
+    expect(second.body).toMatchObject({ version: 2, behaviors: 'Empatia\nVisão sistêmica' });
+
+    const maps = (await authed(app).get(url)).body as Array<{ version: number; behaviors: string }>;
+    expect(maps.find((map) => map.version === 1)?.behaviors).toBe('Empatia');
+    expect(await idsByText(report.id)).toEqual(before);
+
+    const tooLong = await authed(app)
+      .post(url)
+      .send({ behaviors: 'a'.repeat(3001), responsibilities: sampleResponsibilities });
+    expect(tooLong.status).toBe(400);
+  });
 
   it('deve manter o histórico das iguais, aposentar as removidas e reativar as que voltam', async () => {
     const report = await createReport({

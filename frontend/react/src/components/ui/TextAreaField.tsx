@@ -6,10 +6,18 @@ import { fieldControlClass } from './TextField';
 // (sem barra de rolagem interna); `rows` define a altura mínima.
 export type TextAreaFieldProps = Omit<ComponentPropsWithoutRef<'textarea'>, 'id'> & {
   label: string;
+  errorMessage?: string;
 };
 
-export function TextAreaField({ label, className, value, ...rest }: TextAreaFieldProps) {
+export function TextAreaField({
+  label,
+  errorMessage,
+  className,
+  value,
+  ...rest
+}: TextAreaFieldProps) {
   const id = useId();
+  const errorId = `${id}-error`;
   const ref = useRef<HTMLTextAreaElement>(null);
 
   const fit = () => {
@@ -35,9 +43,16 @@ export function TextAreaField({ label, className, value, ...rest }: TextAreaFiel
         ref={ref}
         id={id}
         value={value}
+        aria-invalid={errorMessage ? true : undefined}
+        aria-describedby={errorMessage ? errorId : undefined}
         className={cn(fieldControlClass, 'resize-none overflow-hidden py-2 leading-relaxed')}
         {...rest}
       />
+      {errorMessage ? (
+        <p id={errorId} className="text-danger mt-1 text-body-sm">
+          {errorMessage}
+        </p>
+      ) : null}
     </div>
   );
 }
