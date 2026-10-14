@@ -33,6 +33,19 @@ const renderEditor = (
 const openTab = (name: RegExp | string) => userEvent.click(screen.getByRole('tab', { name }));
 
 describe('ReviewEditor', () => {
+  it('deve abrir na aba pedida e avisar quando a pessoa troca de aba', async () => {
+    const onTabChange = vi.fn();
+    renderEditor({ initialTab: 'combinados', onTabChange });
+
+    expect(screen.getByRole('tab', { name: /Combinados/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+
+    await openTab(/Perguntas/);
+    expect(onTabChange).toHaveBeenCalledWith('perguntas');
+  });
+
   it('deve salvar o conteúdo com as edições feitas', async () => {
     const onSave = renderEditor();
 

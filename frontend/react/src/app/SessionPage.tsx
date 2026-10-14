@@ -43,6 +43,8 @@ export function SessionPage() {
 
   const [selectedId, setSelectedId] = useState<string>();
   const [activeEvidence, setActiveEvidence] = useState<string>();
+  // Aba aberta na revisão: guardada aqui para continuar a mesma depois de salvar.
+  const [reviewTab, setReviewTab] = useState('resumo');
 
   const list = analyses.data ?? [];
   const finalAnalysis = list.find((item) => item.isFinal);
@@ -206,6 +208,8 @@ export function SessionPage() {
               <ReviewEditor
                 key={`${effectiveId}-${current.reviewedAt ?? 'novo'}`}
                 initial={content}
+                initialTab={reviewTab}
+                onTabChange={setReviewTab}
                 previousLabels={previousLabels}
                 responsibilities={responsibilityOptions}
                 isSaving={save.isPending}

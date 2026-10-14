@@ -20,6 +20,9 @@ type ReviewEditorProps = {
   responsibilities?: ResponsibilityOption[];
   isSaving: boolean;
   errorMessage?: string;
+  // Aba aberta ao montar e aviso de troca: quem usa guarda a aba, para ela continuar a mesma depois de salvar.
+  initialTab?: string;
+  onTabChange?: (tab: string) => void;
   // Texto de apoio à esquerda do rodapé (ex.: quantos combinados já estão salvos).
   footerNote?: ReactNode;
   // Avisa qual trecho da transcrição destacar (combinado sob o mouse ou o foco).
@@ -34,12 +37,18 @@ export function ReviewEditor({
   responsibilities = [],
   isSaving,
   errorMessage,
+  initialTab = 'resumo',
+  onTabChange = () => {},
   footerNote,
   onEvidenceChange = () => {},
   onSave,
 }: ReviewEditorProps) {
   const { draft, setField, problems, toSave, isDirty, reset } = useReviewDraft(initial);
-  const [tab, setTab] = useState('resumo');
+  const [tab, setTab] = useState(initialTab);
+  const selectTab = (next: string) => {
+    setTab(next);
+    onTabChange(next);
+  };
 
   const suggestions = Object.fromEntries(
     initial.previous_agreements.map((item) => [item.id, item.suggested_status]),
@@ -57,7 +66,7 @@ export function ReviewEditor({
       <Tabs
         label="Seções da análise"
         selectedId={tab}
-        onSelect={setTab}
+        onSelect={selectTab}
         className="flex min-h-0 flex-1 flex-col"
         listClassName="px-6 md:px-8"
         panelClassName="min-h-0 flex-1 overflow-auto p-6 md:p-8"
