@@ -8,7 +8,7 @@ const prompt = (overrides: Partial<Settings['prompt']> = {}): Settings['prompt']
   text: 'Instruções padrão do Bonsai para a análise do encontro. '.repeat(6),
   isCustom: false,
   minChars: 200,
-  maxChars: 30000,
+  maxChars: 15000,
   ...overrides,
 });
 
@@ -41,7 +41,7 @@ describe('PromptSection', () => {
     await userEvent.clear(field);
     await userEvent.type(field, 'curto');
     expect(screen.getByRole('button', { name: 'Salvar prompt' })).toBeDisabled();
-    expect(screen.getByRole('alert')).toHaveTextContent('entre 200 e 30.000');
+    expect(screen.getByRole('alert')).toHaveTextContent('entre 200 e 15.000');
   });
 
   it('deve oferecer voltar ao padrão só quando o prompt é personalizado, com confirmação', async () => {

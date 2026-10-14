@@ -11,7 +11,7 @@ Spec: [spec.md](spec.md). Constitution check: stack padrão mantida (Node 22 + T
 | A chave é conferida com uma chamada de **listar modelos** da Anthropic antes de gravar | Não gasta tokens e prova que a chave é aceita. Injetada como dependência, para testar sem internet. |
 | Lista fixa de modelos no código (`shared/ai/models.ts`) | A líder escolhe, não digita; entra modelo novo numa atualização. |
 | `makeAnthropicClient` passa a receber `{apiKey, model}`; um resolvedor `resolveAiConfig(leaderId)` escolhe: configuração da líder → `.env` → "não configurado" | Mantém o padrão da instalação como reserva (FR-008). Serviços chamam `getAiClient(leaderId)`. |
-| Prompt: texto da líder no banco; se vazio, arquivo `prompts/analysis-1on1.md`. Entre 200 e 30.000 caracteres | Voltar ao padrão = apagar o texto. Formato da resposta continua forçado pelo schema, independente do prompt. |
+| Prompt: texto da líder no banco; se vazio, arquivo `prompts/analysis-1on1.md`. Entre 200 e 15.000 caracteres | Voltar ao padrão = apagar o texto. Formato da resposta continua forçado pelo schema, independente do prompt. |
 | API: `GET /settings`, `PUT/DELETE /settings/api-key`, `PUT /settings/model`, `PUT/DELETE /settings/prompt` (só papel `lider`, já coberto pelo bloqueio padrão) | Um recurso, ações pequenas. A chave nunca sai nas respostas. |
 | Tela `/configuracoes` (item "Configurações" no menu), feature `features/settings` | Segue BRAND.md e os componentes `ui/` existentes. |
 | Logs: nada de chave nem texto do prompt (só tipo de erro) | FR-011. |

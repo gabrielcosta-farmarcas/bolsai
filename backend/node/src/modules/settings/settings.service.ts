@@ -6,7 +6,7 @@ import type { CurrentUser } from '../../shared/security/current-user.js';
 import { decrypt, encrypt } from '../../shared/security/session-crypto.js';
 
 export const PROMPT_MIN_CHARS = 200;
-export const PROMPT_MAX_CHARS = 30_000;
+export const PROMPT_MAX_CHARS = 15_000;
 const API_KEY_MIN_CHARS = 20;
 const API_KEY_MAX_CHARS = 300;
 
