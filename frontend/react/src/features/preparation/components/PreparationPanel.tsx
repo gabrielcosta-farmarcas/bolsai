@@ -49,7 +49,7 @@ function Chip({
 function Details({ id, content }: { id: DetailId; content: PreparationContent }) {
   if (id === 'agreements') {
     return (
-      <ul className="grid gap-2">
+      <ul className="grid gap-4">
         {content.open_agreements.map((item) => (
           <li key={item.id} className="flex flex-wrap items-center gap-x-2 gap-y-1">
             {item.is_overdue ? <StatusBadge tone="attention">Atrasado</StatusBadge> : null}
@@ -65,7 +65,7 @@ function Details({ id, content }: { id: DetailId; content: PreparationContent })
   }
   if (id === 'themes') {
     return (
-      <ul className="grid gap-2">
+      <ul className="grid gap-4">
         {content.themes.map((theme) => (
           <li key={theme.title}>
             <span className="font-semibold">{theme.title}</span>
@@ -76,7 +76,7 @@ function Details({ id, content }: { id: DetailId; content: PreparationContent })
     );
   }
   return (
-    <ul className="grid gap-2">
+    <ul className="grid gap-4">
       {content.map_gaps.map((gap) => (
         <li key={gap.responsibility_id}>
           <span className="font-semibold">{gap.title}</span>
@@ -171,7 +171,7 @@ function Roteiro({ content }: { content: PreparationContent }) {
       )}
 
       {openId ? (
-        <div className="bg-surface border-border max-w-reading mt-3 rounded-lg border p-4">
+        <div className="bg-surface border-border mt-3 rounded-lg border p-6">
           <Details id={openId} content={content} />
         </div>
       ) : null}
