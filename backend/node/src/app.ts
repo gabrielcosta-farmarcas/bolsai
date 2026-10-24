@@ -8,6 +8,8 @@ import { directReportsRouter } from './modules/direct-reports/direct-reports.rou
 import type { AnalysesService } from './modules/analyses/analyses.service.js';
 import { agreementsRouter } from './modules/agreements/agreements.routes.js';
 import { analysesRouter } from './modules/analyses/analyses.routes.js';
+import { preparationsRouter } from './modules/preparations/preparations.routes.js';
+import type { PreparationsService } from './modules/preparations/preparations.service.js';
 import { exportsRouter } from './modules/exports/exports.routes.js';
 import { sessionsRouter } from './modules/sessions/sessions.routes.js';
 import { timelineRouter } from './modules/timeline/timeline.routes.js';
@@ -28,12 +30,19 @@ import { env } from './config/env.js';
 import { AppError } from './shared/errors/app-error.js';
 import { csrfProtection } from './shared/security/csrf.js';
 import { API_LIMIT, AUTH_LIMIT, createRateLimiter } from './shared/security/rate-limit.js';
-import { leaderOnlyByDefault, requireAuth } from './shared/security/require-auth.js';
+import {
+  leaderOnlyByDefault,
+  localBypassAuth,
+  requireAuth,
+} from './shared/security/require-auth.js';
 import { securityHeaders } from './shared/security/security-headers.js';
 import { loadKey } from './shared/security/session-crypto.js';
 
 type AppDeps = {
   analysesService?: AnalysesService;
+  // Só testes: pula o login (no app real vem de LOCAL_AUTH_BYPASS).
+  authBypass?: boolean;
+  preparationsService?: PreparationsService;
   settingsService?: SettingsService;
   // Trocável nos testes (para não chamar a IA de verdade nem esperar segundo plano).
   titles?: TitleSuggester;
@@ -117,11 +126,17 @@ export const createApp = (deps: AppDeps = {}) => {
 
   // A partir daqui tudo é /api: limite de pedidos; entrada com limite mais apertado.
   app.use('/api', createRateLimiter(API_LIMIT));
-  app.use('/api/v1/auth', createRateLimiter(AUTH_LIMIT), authRouter({ sessions, oidc, key }));
+  const authenticate =
+    (deps.authBypass ?? env.LOCAL_AUTH_BYPASS) ? localBypassAuth() : requireAuth(sessions);
+  app.use(
+    '/api/v1/auth',
+    createRateLimiter(AUTH_LIMIT),
+    authRouter({ sessions, oidc, key, authenticate }),
+  );
 
   // Todo o resto exige pedido legítimo da tela (CSRF) e sessão válida.
   // Sem o papel `lider`, nada de conteúdo (nega por padrão: rota nova também fica fechada).
-  app.use('/api/v1', csrfProtection(appOrigin), requireAuth(sessions), leaderOnlyByDefault());
+  app.use('/api/v1', csrfProtection(appOrigin), authenticate, leaderOnlyByDefault());
 
   const titles =
     deps.titles ??
@@ -132,6 +147,7 @@ export const createApp = (deps: AppDeps = {}) => {
   app.use('/api/v1', responsibilitiesRouter());
   app.use('/api/v1', sessionsRouter());
   app.use('/api/v1', analysesRouter(deps.analysesService));
+  app.use('/api/v1', preparationsRouter(deps.preparationsService));
   app.use('/api/v1', agreementsRouter());
   app.use('/api/v1', timelineRouter());
   app.use('/api/v1', exportsRouter());

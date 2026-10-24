@@ -37,6 +37,7 @@ export type NewDirectReport = {
   // Versão 1 do responsograma e as responsabilidades, criadas junto com a pessoa (sempre de 3 a 10).
   initialMap: {
     mission: string | null;
+    behaviors: string | null;
     responsibilities: string;
     text: string;
     items: CheckedResponsibility[];
@@ -115,7 +116,7 @@ export const makeDirectReportsService = (
     },
 
     async create(user: CurrentUser, input: CreateDirectReportInput) {
-      const { mission, responsibilities, ...person } = input;
+      const { mission, behaviors, responsibilities, ...person } = input;
       const { items } = checkResponsibilities(responsibilities);
       const responsibilitiesText = composeResponsibilities(items);
       const record = await repo.create(user.leaderId, {
@@ -123,8 +124,9 @@ export const makeDirectReportsService = (
         status: person.status ?? 'active',
         initialMap: {
           mission: mission?.trim() || null,
+          behaviors: behaviors?.trim() || null,
           responsibilities: responsibilitiesText,
-          text: composeMapText({ mission, responsibilities: responsibilitiesText }),
+          text: composeMapText({ mission, responsibilities: responsibilitiesText, behaviors }),
           items,
         },
       });

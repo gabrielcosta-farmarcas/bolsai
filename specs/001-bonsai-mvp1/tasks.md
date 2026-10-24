@@ -104,12 +104,12 @@ description: "Task list for Bonsai MVP 1"
 **Goal**: on-demand preparation grounded in history.
 **Independent test**: after 2 reviewed sessions, preparation cites both.
 
-- [ ] T049 [P] [US4] Preparation Zod schema tests (3–5 questions, `has_history`) and service tests with `FakeAiClient` (no history case) in `backend/node/src/modules/preparations/`
-- [ ] T050 [P] [US4] Integration tests for `POST /direct-reports/:id/preparations` and `GET .../latest` in `backend/node/src/modules/preparations/preparations.routes.integration.test.ts`
-- [ ] T051 [US4] Migration + model for `preparations` (`model`, `content` jsonb)
-- [ ] T052 [P] [US4] Prompt `backend/node/prompts/preparation.md` (open/overdue agreements, recurring/pending themes, 3 to 5 strategic questions not about task status, under-discussed map points)
-- [ ] T053 [US4] Preparations module (deterministic open/overdue agreements from DB + AI for themes/questions/gaps; async like analyses) in `backend/node/src/modules/preparations/`
-- [ ] T054 [US4] Web: preparation screen on the direct report page in `frontend/react/src/features/preparation/`
+- [x] T049 [P] [US4] Preparation Zod schema tests (3–5 questions, `has_history`) and service tests with `FakeAiClient` (no history case) in `backend/node/src/modules/preparations/`
+- [x] T050 [P] [US4] Integration tests for `POST /direct-reports/:id/preparations` and `GET .../latest` in `backend/node/src/modules/preparations/preparations.routes.integration.test.ts`
+- [x] T051 [US4] Migration + model for `preparations` (`model`, `content` jsonb)
+- [x] T052 [P] [US4] Prompt `backend/node/prompts/preparation.md` (open/overdue agreements, recurring/pending themes, 3 to 5 strategic questions not about task status, under-discussed map points)
+- [x] T053 [US4] Preparations module (deterministic open/overdue agreements from DB + AI for themes/questions/gaps; async like analyses) in `backend/node/src/modules/preparations/`
+- [x] T054 [US4] Web: preparation screen on the direct report page in `frontend/react/src/features/preparation/`
 - [ ] T055 [US4] Verify stage 4 per `quickstart.md`
 
 **Checkpoint**: ask approval.

@@ -19,6 +19,7 @@ export const makeResponsibilityMapsController = (service: ResponsibilityMapsServ
     res.status(201).json(
       await service.createVersion(getCurrentUser(), params.id, {
         mission: body.mission,
+        behaviors: body.behaviors,
         responsibilities: body.responsibilities,
       }),
     );

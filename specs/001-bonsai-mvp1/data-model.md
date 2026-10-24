@@ -24,7 +24,7 @@ PostgreSQL 16, UTF8. PK = UUIDv7 (app-generated), `snake_case`, plural tables, i
 `id`, `leader_id`, `direct_report_id`, `origin_session_id`, `description`, `owner` (`leader`|`report`), `due_date` (null), `status` (`open`|`done`|`cancelled`), `evidence_excerpt`, `closed_at`. Index `(direct_report_id, status)`. Overdue is computed. Added for automatic saving: `origin` (`ai`|`leader`), `analysis_id` (nullable FK: which analysis created it), `confirmed_at` (null while an AI agreement is untouched; set when the leader edits it or saves the review). Replacement rule when an analysis finishes for a session with no final review: delete that session's agreements with `origin = 'ai' AND confirmed_at IS NULL`, then insert the new ones; confirmed ones and manual ones are kept. A saved review sets `confirmed_at` on its agreements.
 
 ## preparations
-`id`, `leader_id`, `direct_report_id`, `model`, `content` (jsonb: `open_agreements`, `themes`, `questions` (3–5), `map_gaps`, `has_history`).
+`id`, `leader_id`, `direct_report_id`, `model`, `status` (reaproveita `analysis_status`), `error_message`, `map_version_used`, `content` (jsonb: `open_agreements`, `themes` (até 4), `questions` (3–5), `map_gaps`, `has_history`), tokens. `open_agreements` e `map_gaps` são calculados no servidor, sem IA: combinados abertos (com atraso) e responsabilidades ativas que não tiveram observação nos 3 últimos encontros revisados (com a data da última conversa, ou nula). Só `themes` e `questions` vêm da IA. O prompt (`prompts/preparation.md`) não é editável em Configurações.
 
 ## Visibility rule
 Every read of sessions, analyses, agreements, preparations, maps and timeline joins `direct_reports` with `deleted_at IS NULL`.

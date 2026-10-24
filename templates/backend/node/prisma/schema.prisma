@@ -27,6 +27,7 @@ model Leader {
   sessions         Session[]
   analyses         Analysis[]
   agreements       Agreement[]
+  preparations     Preparation[]
   settings         LeaderSettings?
 
   @@map("leaders")
@@ -75,6 +76,7 @@ model DirectReport {
   responsibilities Responsibility[]
   sessions         Session[]
   agreements       Agreement[]
+  preparations     Preparation[]
 
   @@map("direct_reports")
 }
@@ -90,6 +92,8 @@ model ResponsibilityMap {
   text             String
   // Seções do responsograma preenchidas na tela; `text` é a junção delas (é o que a IA lê).
   mission          String?
+  // Comportamentos desejados do cargo (texto livre, opcional); valem para esta versão.
+  behaviors        String?
   responsibilities String?
   fileBytes        Bytes?      @map("file_bytes")
   createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -242,6 +246,29 @@ model AuthSession {
 
 // Uma responsabilidade do responsograma de uma pessoa (um campo preenchido). O histórico acompanha o texto
 // (key = texto normalizado), não a posição. Aposentada (retired_at) = saiu de uma versão do responsograma.
+// Roteiro para o próximo 1:1 de uma pessoa, gerado sob demanda (em segundo plano, como a análise).
+// `content` guarda o retrato do que a líder viu (combinados, temas, perguntas, lacunas): ver data-model.md.
+model Preparation {
+  id             String         @id @default(uuid(7)) @db.Uuid
+  leaderId       String         @map("leader_id") @db.Uuid
+  directReportId String         @map("direct_report_id") @db.Uuid
+  model          String?
+  status         AnalysisStatus @default(processing)
+  errorMessage   String?        @map("error_message")
+  mapVersionUsed Int?           @map("map_version_used")
+  content        Json?
+  inputTokens    Int?           @map("input_tokens")
+  outputTokens   Int?           @map("output_tokens")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  leader       Leader       @relation(fields: [leaderId], references: [id])
+  directReport DirectReport @relation(fields: [directReportId], references: [id])
+
+  @@index([directReportId, createdAt])
+  @@map("preparations")
+}
+
 model Responsibility {
   id             String      @id @default(uuid(7)) @db.Uuid
   leaderId       String      @map("leader_id") @db.Uuid

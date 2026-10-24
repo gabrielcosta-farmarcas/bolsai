@@ -1,9 +1,14 @@
-// O responsograma tem a missão do cargo e as responsabilidades. O texto de cada versão é a junção delas,
+// O responsograma tem a missão do cargo, as responsabilidades e os comportamentos desejados. O texto de cada versão é a junção delas,
 // com os mesmos títulos usados nos documentos de cargo.
 export const MISSION_TITLE = 'MISSÃO / FINALIDADE DO CARGO';
 export const RESPONSIBILITIES_TITLE = 'RESPONSABILIDADES';
+export const BEHAVIORS_TITLE = 'COMPORTAMENTOS DESEJADOS';
 
-export type MapSections = { mission?: string | null; responsibilities?: string | null };
+export type MapSections = {
+  mission?: string | null;
+  responsibilities?: string | null;
+  behaviors?: string | null;
+};
 
 const clean = (value: string | null | undefined) => value?.trim() ?? '';
 
@@ -18,6 +23,7 @@ export const composeMapText = (sections: MapSections): string =>
     clean(sections.responsibilities)
       ? `${RESPONSIBILITIES_TITLE}\n${clean(sections.responsibilities)}`
       : null,
+    clean(sections.behaviors) ? `${BEHAVIORS_TITLE}\n${clean(sections.behaviors)}` : null,
   ]
     .filter((part): part is string => part !== null)
     .join('\n\n');

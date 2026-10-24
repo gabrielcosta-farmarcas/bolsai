@@ -95,7 +95,12 @@ type Deps = {
     findCurrent: (
       leaderId: string,
       directReportId: string,
-    ) => Promise<{ version: number; text: string; mission: string | null } | null>;
+    ) => Promise<{
+      version: number;
+      text: string;
+      mission: string | null;
+      behaviors?: string | null;
+    } | null>;
   };
   // Todas as responsabilidades da pessoa (ativas e aposentadas), com a posição no responsograma.
   responsibilities: {
@@ -301,6 +306,7 @@ export const makeAnalysesService = (deps: Deps) => {
         map: {
           version: map.version,
           mission: map.mission,
+          behaviors: map.behaviors,
           responsibilities: numbered.map(({ ref, text }) => ({ ref, text })),
         },
         history: history.map((item) => ({

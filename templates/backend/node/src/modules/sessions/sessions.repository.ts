@@ -63,4 +63,13 @@ export const sessionsRepository: SessionsRepository = {
       select: detailSelect,
     });
   },
+
+  async remove(leaderId, id) {
+    // O banco não apaga em cascata: a ordem importa (combinados e análises apontam para o encontro).
+    await prisma.$transaction(async (tx) => {
+      await tx.agreement.deleteMany({ where: { originSessionId: id, leaderId } });
+      await tx.analysis.deleteMany({ where: { sessionId: id, leaderId } });
+      await tx.session.delete({ where: { id, leaderId } });
+    });
+  },
 };

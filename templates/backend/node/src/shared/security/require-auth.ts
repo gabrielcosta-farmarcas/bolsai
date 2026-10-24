@@ -3,7 +3,7 @@ import type { SessionService } from '../../modules/auth/session.service.js';
 import { UnauthorizedError } from '../errors/unauthorized-error.js';
 import { ForbiddenError } from '../errors/forbidden-error.js';
 import { SESSION_COOKIE, parseCookies } from './cookies.js';
-import { getAuthUser, hasRole, runWithUser } from './current-user.js';
+import { FIXED_LEADER_ID, getAuthUser, hasRole, runWithUser } from './current-user.js';
 
 // Só passa quem tem sessão válida. O usuário fica disponível, só para esta requisição, em getCurrentUser().
 export const requireAuth =
@@ -24,6 +24,24 @@ export const requireAuth =
       })
       .catch(next);
   };
+
+// SÓ PARA TESTE LOCAL (LOCAL_AUTH_BYPASS=true, recusado em produção): pula o login e entra como a líder fixa.
+export const localBypassAuth = (): RequestHandler => (_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  runWithUser(
+    {
+      sessionId: 'local-bypass',
+      subject: 'local-bypass',
+      email: null,
+      name: 'Teste local',
+      roles: ['lider'],
+      leaderId: FIXED_LEADER_ID,
+    },
+    () => {
+      next();
+    },
+  );
+};
 
 // Exige um dos papéis. Usar depois de requireAuth.
 export const requireRole =

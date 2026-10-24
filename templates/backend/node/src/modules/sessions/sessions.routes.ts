@@ -44,6 +44,7 @@ export const sessionsRouter = () => {
   );
   router.get('/sessions/:id', validate(sessionRequestSchema), controller.getById);
   router.patch('/sessions/:id', validate(updateSessionRequestSchema), controller.update);
+  router.delete('/sessions/:id', validate(sessionRequestSchema), controller.remove);
 
   return router;
 };

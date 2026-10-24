@@ -21,7 +21,7 @@ export type AnalysisInputContext = {
 
 // Bloco do responsograma: a missão, a lista numerada (R1, R2…) com o texto COMPLETO de cada responsabilidade,
 // sem cortar nem resumir, e os comportamentos desejados (se houver). A IA aponta cada observação para um desses números.
-const buildMapBlock = (map: NonNullable<AnalysisInputContext['map']>): string => {
+export const buildMapBlock = (map: NonNullable<AnalysisInputContext['map']>): string => {
   const mission = map.mission?.trim() ? `<missao>\n${map.mission.trim()}\n</missao>\n` : '';
   const list = map.responsibilities.map((item) => `${item.ref}: ${item.text}`).join('\n');
   const behaviors = map.behaviors?.trim()

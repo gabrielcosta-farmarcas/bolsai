@@ -33,6 +33,11 @@ const envSchema = z.object({
   APP_BASE_URL: z.string().url().default('http://localhost:3000'),
   // Quantos servidores intermediários (proxies) ficam entre o navegador e a API. 0 = nenhum (local).
   // Na hospedagem são 2 (proxy do Coolify + nginx da tela): assim o limite de tentativas conta o IP real.
+  // Só para testar no computador: "true" pula o login e entra sempre como a líder fixa. Recusado em produção.
+  LOCAL_AUTH_BYPASS: z
+    .enum(['true', 'false', ''])
+    .optional()
+    .transform((value) => value === 'true'),
   TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(0),
 });
 
@@ -53,6 +58,9 @@ const MISSING_IN_PRODUCTION = [
   'SESSION_ENCRYPTION_KEY',
 ] as const;
 if (parsed.NODE_ENV === 'production') {
+  if (parsed.LOCAL_AUTH_BYPASS) {
+    throw new Error('LOCAL_AUTH_BYPASS não pode ficar ligado em produção.');
+  }
   const missing = MISSING_IN_PRODUCTION.filter((name) => !parsed[name]);
   if (missing.length > 0) {
     throw new Error(`Faltam variáveis de segurança em produção: ${missing.join(', ')}`);

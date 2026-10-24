@@ -20,12 +20,13 @@ import {
   useRenameResponsibility,
   useResponsibilities,
 } from '@/features/responsibilities';
+import { PreparationPanel, usePreparation, useStartPreparation } from '@/features/preparation';
 import { SessionList, useSessions } from '@/features/sessions';
 import { Timeline, useTimeline } from '@/features/timeline';
 import { formatCalendarDate } from '@/lib/format';
 
 const DEFAULT_TAB = 'encontros';
-const VALID_TABS = ['encontros', 'combinados', 'linha-do-tempo', 'responsograma'];
+const VALID_TABS = ['encontros', 'preparar', 'combinados', 'linha-do-tempo', 'responsograma'];
 
 export function DirectReportPage() {
   const { id = '' } = useParams();
@@ -42,6 +43,8 @@ export function DirectReportPage() {
   const sessions = useSessions(id);
   const agreements = useReportAgreements(id);
   const timeline = useTimeline(id);
+  const preparation = usePreparation(id);
+  const startPreparation = useStartPreparation(id);
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get('aba') ?? DEFAULT_TAB;
   const tab = VALID_TABS.includes(requestedTab) ? requestedTab : DEFAULT_TAB;
@@ -147,6 +150,20 @@ export function DirectReportPage() {
                     />
                   </div>
                 </section>
+              ),
+            },
+            {
+              id: 'preparar',
+              label: 'Preparar 1:1',
+              content: (
+                <PreparationPanel
+                  preparation={preparation.data}
+                  isLoading={preparation.isLoading}
+                  loadError={preparation.error?.message}
+                  isStarting={startPreparation.isPending}
+                  startError={startPreparation.error?.message}
+                  onStart={() => startPreparation.mutate()}
+                />
               ),
             },
             {

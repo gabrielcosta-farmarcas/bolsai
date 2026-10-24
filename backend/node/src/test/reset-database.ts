@@ -8,6 +8,7 @@ import { createTestSession, setDefaultTestSession } from './auth.js';
 export const resetDatabase = async () => {
   await prisma.agreement.deleteMany();
   await prisma.analysis.deleteMany();
+  await prisma.preparation.deleteMany();
   await prisma.session.deleteMany();
   await prisma.responsibilityMap.deleteMany();
   await prisma.responsibility.deleteMany();

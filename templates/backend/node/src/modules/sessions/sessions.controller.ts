@@ -6,6 +6,7 @@ import { getCurrentUser } from '../../shared/security/current-user.js';
 import type {
   createSessionRequestSchema,
   listSessionsRequestSchema,
+  sessionRequestSchema,
   updateSessionRequestSchema,
 } from './sessions.schemas.js';
 import type { SessionsService } from './sessions.service.js';
@@ -53,5 +54,11 @@ export const makeSessionsController = (service: SessionsService) => ({
   async update(_req: Request, res: Response) {
     const { params, body } = readValidated<z.infer<typeof updateSessionRequestSchema>>(res);
     res.json(await service.update(getCurrentUser(), params.id, body));
+  },
+
+  async remove(_req: Request, res: Response) {
+    const { params } = readValidated<z.infer<typeof sessionRequestSchema>>(res);
+    await service.remove(getCurrentUser(), params.id);
+    res.status(204).end();
   },
 });

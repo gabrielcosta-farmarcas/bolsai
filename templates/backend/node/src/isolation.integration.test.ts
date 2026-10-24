@@ -164,6 +164,8 @@ describe('isolamento entre líderes', () => {
     ],
     ['patch', () => `${API}/agreements/${ids.agreement}`, () => ({ status: 'done' })],
     ['get', () => `${API}/direct-reports/${ids.report}/timeline`],
+    ['get', () => `${API}/direct-reports/${ids.report}/preparations/latest`],
+    ['post', () => `${API}/direct-reports/${ids.report}/preparations`, () => ({})],
   ];
 
   // Listas sem id: respondem 200, mas só com o que é da própria líder.
@@ -296,6 +298,7 @@ describe('isolamento entre líderes', () => {
         responsibilityMapsRepository.createNextVersion(leaderB, ids.report, {
           text: 'x',
           mission: null,
+          behaviors: null,
           responsibilities: '1. a',
           items: [{ text: 'Atender os clientes', key: 'atender os clientes' }],
         }),

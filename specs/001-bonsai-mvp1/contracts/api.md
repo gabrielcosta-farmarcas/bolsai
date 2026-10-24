@@ -24,7 +24,7 @@ Base `/api/v1`. JSON. Errors: `{ "error": { "code", "message", "details": [] } }
 - `PATCH /agreements/:id` `{description?, owner?, dueDate?, status?}`
 
 ## Preparation
-- `POST /direct-reports/:id/preparations` `{}` → 202 · `GET /direct-reports/:id/preparations/latest`
+- `POST /direct-reports/:id/preparations` `{}` → 202 (gera em segundo plano; 422 `RESPONSIBILITIES_REQUIRED` sem 3 a 10 responsabilidades, 503 `AI_NOT_CONFIGURED`) · `GET /direct-reports/:id/preparations/latest` → o último roteiro (`status` processing|completed|failed, `content` quando concluído) ou `null` se nunca houve.
 
 ## Timeline
 - `GET /direct-reports/:id/timeline` → meetings in order with signals and agreement results

@@ -17,6 +17,7 @@ const mapRecord = (overrides: Partial<MapRecord> = {}): MapRecord => ({
   version: 1,
   text: 'RESPONSABILIDADES\n1. Atender os clientes',
   mission: null,
+  behaviors: null,
   responsibilities: '1. Atender os clientes',
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   ...overrides,
@@ -53,6 +54,7 @@ describe('responsibility maps service — createVersion', () => {
     expect(repo.createNextVersion).toHaveBeenCalledWith(FIXED_LEADER_ID, 'r1', {
       text: 'MISSÃO / FINALIDADE DO CARGO\nMissão do cargo\n\nRESPONSABILIDADES\n1. Atender os clientes\n2. Registrar no CRM\n3. Validar as entregas',
       mission: 'Missão do cargo',
+      behaviors: null,
       responsibilities: '1. Atender os clientes\n2. Registrar no CRM\n3. Validar as entregas',
       items: [
         { text: 'Atender os clientes', key: 'atender os clientes' },
@@ -60,6 +62,38 @@ describe('responsibility maps service — createVersion', () => {
         { text: 'Validar as entregas', key: 'validar as entregas' },
       ],
     });
+  });
+
+  it('deve guardar os comportamentos desejados aparados e incluí-los no texto da versão', async () => {
+    const { repo, service } = setup();
+
+    await service.createVersion(user, 'r1', {
+      behaviors: '  Pensamento crítico\nBoa comunicação  ',
+      responsibilities: three,
+    });
+
+    expect(repo.createNextVersion).toHaveBeenCalledWith(
+      FIXED_LEADER_ID,
+      'r1',
+      expect.objectContaining({
+        behaviors: 'Pensamento crítico\nBoa comunicação',
+        text: expect.stringContaining(
+          'COMPORTAMENTOS DESEJADOS\nPensamento crítico\nBoa comunicação',
+        ),
+      }),
+    );
+  });
+
+  it('deve salvar comportamentos vazios como nulos', async () => {
+    const { repo, service } = setup();
+
+    await service.createVersion(user, 'r1', { behaviors: '   ', responsibilities: three });
+
+    expect(repo.createNextVersion).toHaveBeenCalledWith(
+      FIXED_LEADER_ID,
+      'r1',
+      expect.objectContaining({ behaviors: null }),
+    );
   });
 
   it('deve recusar menos de 3 e não criar versão', async () => {
