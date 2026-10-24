@@ -76,24 +76,49 @@ describe('PreparationPanel', () => {
     expect(screen.getByRole('button', { name: 'Gerar de novo' })).toBeEnabled();
   });
 
-  it('deve mostrar perguntas, combinados, temas e responsabilidades pouco conversadas', () => {
+  it('deve mostrar as perguntas em destaque e os detalhes só ao clicar nas etiquetas', async () => {
     renderPanel({ preparation: completed });
 
     const questions = screen.getByRole('region', { name: 'Perguntas para o encontro' });
     expect(within(questions).getAllByRole('listitem')).toHaveLength(3);
 
-    const agreements = screen.getByRole('region', { name: 'Combinados em aberto' });
-    expect(within(agreements).getByText('Enviar a proposta')).toBeInTheDocument();
-    expect(within(agreements).getByText('Atrasado')).toBeInTheDocument();
+    const agreements = screen.getByRole('button', {
+      name: '1 combinado em aberto (1 atrasado)',
+    });
+    expect(agreements).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('Enviar a proposta')).not.toBeInTheDocument();
 
+    await userEvent.click(agreements);
+    expect(agreements).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('Enviar a proposta')).toBeInTheDocument();
+    expect(screen.getByText('Atrasado')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: '1 tema para retomar' }));
     expect(screen.getByText('Proposta parada')).toBeInTheDocument();
+    expect(screen.queryByText('Enviar a proposta')).not.toBeInTheDocument();
 
-    const gaps = screen.getByRole('region', { name: 'Responsabilidades pouco conversadas' });
-    expect(within(gaps).getByText(/ainda não foi conversada/)).toBeInTheDocument();
-    expect(within(gaps).getByText(/última conversa em/)).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole('button', { name: '2 responsabilidades pouco conversadas' }),
+    );
+    expect(screen.getByText(/nunca foi conversada/)).toBeInTheDocument();
+    expect(screen.getByText(/última conversa em/)).toBeInTheDocument();
   });
 
-  it('deve avisar que não há histórico e esconder seções vazias', () => {
+  it('deve copiar o roteiro com perguntas e contexto', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    renderPanel({ preparation: completed });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Copiar roteiro' }));
+
+    const copied = writeText.mock.calls[0]?.[0] as string;
+    expect(copied).toContain('1. O que te motiva hoje?');
+    expect(copied).toContain('Enviar a proposta');
+    expect(copied).toContain('atrasado');
+    expect(await screen.findByText('Roteiro copiado.')).toBeInTheDocument();
+  });
+
+  it('deve avisar que não há histórico e esconder o que está vazio', () => {
     renderPanel({
       preparation: {
         ...completed,
@@ -108,11 +133,8 @@ describe('PreparationPanel', () => {
     });
 
     expect(screen.getByText(/Ainda não há encontros analisados/)).toBeInTheDocument();
-    expect(screen.getByText('Nenhum combinado em aberto.')).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Temas para retomar' })).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('region', { name: 'Responsabilidades pouco conversadas' }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByText(/Nenhum combinado em aberto nem tema pendente/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /combinado/ })).not.toBeInTheDocument();
   });
 
   it('deve mostrar o erro ao pedir o roteiro', () => {

@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { cn } from '@/lib/cn';
 import { formatCalendarDate, formatDateTime } from '@/lib/format';
+import { buildRoteiroText } from '../lib/roteiroText';
 import type { Preparation, PreparationContent } from '../types';
 
 type PreparationPanelProps = {
@@ -12,18 +15,126 @@ type PreparationPanelProps = {
   onStart: () => void;
 };
 
+type DetailId = 'agreements' | 'themes' | 'gaps';
+
 const ownerLabel = (owner: 'leader' | 'report') => (owner === 'leader' ? 'Você' : 'A pessoa');
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+
+// Etiqueta que abre ou fecha os detalhes embaixo.
+function Chip({
+  label,
+  isOpen,
+  onToggle,
+}: {
+  label: string;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
   return (
-    <section className="mt-8" aria-label={title}>
-      <h2 className="text-h3">{title}</h2>
-      <div className="mt-3">{children}</div>
-    </section>
+    <button
+      type="button"
+      aria-expanded={isOpen}
+      onClick={onToggle}
+      className={cn(
+        'border-border text-caption rounded-full border px-3 py-1 font-semibold transition-colors',
+        isOpen ? 'bg-primary-subtle text-primary' : 'bg-surface text-text hover:bg-primary-subtle',
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
+function Details({ id, content }: { id: DetailId; content: PreparationContent }) {
+  if (id === 'agreements') {
+    return (
+      <ul className="grid gap-2">
+        {content.open_agreements.map((item) => (
+          <li key={item.id} className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            {item.is_overdue ? <StatusBadge tone="attention">Atrasado</StatusBadge> : null}
+            <span>{item.description}</span>
+            <span className="text-text-muted text-body-sm">
+              {ownerLabel(item.owner)} ·{' '}
+              {item.due_date ? `prazo ${formatCalendarDate(item.due_date)}` : 'sem prazo'}
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  if (id === 'themes') {
+    return (
+      <ul className="grid gap-2">
+        {content.themes.map((theme) => (
+          <li key={theme.title}>
+            <span className="font-semibold">{theme.title}</span>
+            {theme.detail ? <span className="text-text-muted"> · {theme.detail}</span> : null}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  return (
+    <ul className="grid gap-2">
+      {content.map_gaps.map((gap) => (
+        <li key={gap.responsibility_id}>
+          <span className="font-semibold">{gap.title}</span>
+          <span className="text-text-muted">
+            {gap.last_discussed_on
+              ? ` · última conversa em ${formatCalendarDate(gap.last_discussed_on)}`
+              : ' · nunca foi conversada'}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
 function Roteiro({ content }: { content: PreparationContent }) {
+  const [openId, setOpenId] = useState<DetailId | null>(null);
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+
+  const overdue = content.open_agreements.filter((item) => item.is_overdue).length;
+  const agreementsLabel =
+    plural(content.open_agreements.length, 'combinado em aberto', 'combinados em aberto') +
+    (overdue > 0 ? ` (${overdue} ${overdue === 1 ? 'atrasado' : 'atrasados'})` : '');
+
+  const chips: Array<{ id: DetailId; label: string }> = [
+    ...(content.open_agreements.length > 0
+      ? [{ id: 'agreements' as const, label: agreementsLabel }]
+      : []),
+    ...(content.themes.length > 0
+      ? [
+          {
+            id: 'themes' as const,
+            label: plural(content.themes.length, 'tema para retomar', 'temas para retomar'),
+          },
+        ]
+      : []),
+    ...(content.map_gaps.length > 0
+      ? [
+          {
+            id: 'gaps' as const,
+            label: plural(
+              content.map_gaps.length,
+              'responsabilidade pouco conversada',
+              'responsabilidades pouco conversadas',
+            ),
+          },
+        ]
+      : []),
+  ];
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(buildRoteiroText(content));
+      setCopyFeedback('Roteiro copiado.');
+    } catch {
+      setCopyFeedback('Não deu para copiar o roteiro. Tente de novo.');
+    }
+  };
+
   return (
     <>
       {!content.has_history ? (
@@ -32,62 +143,49 @@ function Roteiro({ content }: { content: PreparationContent }) {
         </p>
       ) : null}
 
-      <Section title="Perguntas para o encontro">
-        <ol className="grid max-w-reading list-decimal gap-2 pl-5">
+      <section
+        aria-label="Perguntas para o encontro"
+        className="bg-primary-subtle mt-6 rounded-lg p-5"
+      >
+        <h2 className="text-h3">Perguntas para o encontro</h2>
+        <ol className="max-w-reading mt-3 grid list-decimal gap-3 pl-5">
           {content.questions.map((question) => (
             <li key={question}>{question}</li>
           ))}
         </ol>
-      </Section>
+      </section>
 
-      <Section title="Combinados em aberto">
-        {content.open_agreements.length === 0 ? (
-          <p className="text-text-muted">Nenhum combinado em aberto.</p>
-        ) : (
-          <ul className="bg-surface border-border divide-border divide-y overflow-hidden rounded-lg border">
-            {content.open_agreements.map((item) => (
-              <li key={item.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-4">
-                <span className="max-w-reading">{item.description}</span>
-                <span className="text-text-muted text-body-sm">
-                  {ownerLabel(item.owner)}
-                  {item.due_date ? ` · prazo ${formatCalendarDate(item.due_date)}` : ' · sem prazo'}
-                </span>
-                {item.is_overdue ? <StatusBadge tone="attention">Atrasado</StatusBadge> : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
+      {chips.length > 0 ? (
+        <div className="mt-5 flex flex-wrap gap-2">
+          {chips.map((chip) => (
+            <Chip
+              key={chip.id}
+              label={chip.label}
+              isOpen={openId === chip.id}
+              onToggle={() => setOpenId(openId === chip.id ? null : chip.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <p className="text-text-muted mt-5">Nenhum combinado em aberto nem tema pendente.</p>
+      )}
 
-      {content.themes.length > 0 ? (
-        <Section title="Temas para retomar">
-          <ul className="grid max-w-reading gap-3">
-            {content.themes.map((theme) => (
-              <li key={theme.title}>
-                <span className="font-semibold">{theme.title}</span>
-                {theme.detail ? <span className="text-text-muted"> · {theme.detail}</span> : null}
-              </li>
-            ))}
-          </ul>
-        </Section>
+      {openId ? (
+        <div className="bg-surface border-border max-w-reading mt-3 rounded-lg border p-4">
+          <Details id={openId} content={content} />
+        </div>
       ) : null}
 
-      {content.map_gaps.length > 0 ? (
-        <Section title="Responsabilidades pouco conversadas">
-          <ul className="grid max-w-reading gap-2">
-            {content.map_gaps.map((gap) => (
-              <li key={gap.responsibility_id}>
-                <span className="font-semibold">{gap.title}</span>
-                <span className="text-text-muted">
-                  {gap.last_discussed_on
-                    ? ` · última conversa em ${formatCalendarDate(gap.last_discussed_on)}`
-                    : ' · ainda não foi conversada'}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Section>
-      ) : null}
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <Button variant="secondary" size="sm" onClick={() => void copy()}>
+          Copiar roteiro
+        </Button>
+        {copyFeedback ? (
+          <span role="status" className="text-text-muted text-body-sm">
+            {copyFeedback}
+          </span>
+        ) : null}
+      </div>
     </>
   );
 }
@@ -118,14 +216,15 @@ export function PreparationPanel({
   }
 
   const isProcessing = preparation?.status === 'processing';
-  const hasRoteiro = preparation?.status === 'completed' && preparation.content !== null;
+  const content = preparation?.status === 'completed' ? preparation.content : null;
 
   return (
     <section aria-label="Preparar o próximo 1:1">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-text-muted max-w-reading">
-          O Bonsai junta os combinados em aberto, os temas dos últimos encontros e o responsograma
-          para sugerir perguntas ao próximo 1:1.
+        <p className="text-text-muted">
+          {content && preparation
+            ? `Gerado em ${formatDateTime(preparation.createdAt)}`
+            : 'Perguntas e contexto para o próximo encontro.'}
         </p>
         <Button onClick={onStart} disabled={isStarting || isProcessing}>
           {preparation ? 'Gerar de novo' : 'Gerar roteiro'}
@@ -157,14 +256,7 @@ export function PreparationPanel({
         <p className="text-text-muted mt-6">Ainda não há roteiro. Clique em “Gerar roteiro”.</p>
       ) : null}
 
-      {hasRoteiro && preparation.content ? (
-        <>
-          <p className="text-text-muted text-caption mt-6">
-            Gerado em {formatDateTime(preparation.createdAt)}
-          </p>
-          <Roteiro content={preparation.content} />
-        </>
-      ) : null}
+      {content ? <Roteiro content={content} /> : null}
     </section>
   );
 }
