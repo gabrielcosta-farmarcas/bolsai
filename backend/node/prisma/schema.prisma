@@ -28,6 +28,8 @@ model Leader {
   analyses         Analysis[]
   agreements       Agreement[]
   preparations     Preparation[]
+  notes            Note[]
+  noteSteps        NoteStep[]
   settings         LeaderSettings?
 
   @@map("leaders")
@@ -77,6 +79,7 @@ model DirectReport {
   sessions         Session[]
   agreements       Agreement[]
   preparations     Preparation[]
+  notes            Note[]
 
   @@map("direct_reports")
 }
@@ -216,6 +219,7 @@ model Agreement {
   directReport  DirectReport @relation(fields: [directReportId], references: [id])
   originSession Session?     @relation(fields: [originSessionId], references: [id])
   analysis      Analysis?    @relation(fields: [analysisId], references: [id])
+  noteStep      NoteStep?
 
   @@index([directReportId, status])
   @@index([originSessionId])
@@ -308,4 +312,58 @@ model LeaderSettings {
   leader Leader @relation(fields: [leaderId], references: [id])
 
   @@map("leader_settings")
+}
+
+enum NoteKind {
+  agreement_missed
+  attention
+  praise
+
+  @@map("note_kind")
+}
+
+// Anotação privada da líder sobre uma pessoa. A situação (sem plano, em andamento, resolvida) não é
+// guardada: sai de resolved_at e dos passos. Exclusão lógica em deleted_at; os passos só são lidos
+// por uma anotação não excluída. O índice parcial vive no SQL da migration.
+model Note {
+  id                 String    @id @default(uuid(7)) @db.Uuid
+  leaderId           String    @map("leader_id") @db.Uuid
+  directReportId     String    @map("direct_report_id") @db.Uuid
+  kind               NoteKind
+  description        String
+  notedAt            DateTime  @map("noted_at") @db.Date
+  resolvedAt         DateTime? @map("resolved_at") @db.Timestamptz(3)
+  bringToNextSession Boolean   @default(false) @map("bring_to_next_session")
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(3)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  leader       Leader       @relation(fields: [leaderId], references: [id])
+  directReport DirectReport @relation(fields: [directReportId], references: [id])
+  steps        NoteStep[]
+
+  @@index([leaderId])
+  @@map("notes")
+}
+
+// Passo do plano de ação de uma anotação. agreement_id preenchido = já virou Combinado (um por passo).
+model NoteStep {
+  id          String         @id @default(uuid(7)) @db.Uuid
+  noteId      String         @map("note_id") @db.Uuid
+  leaderId    String         @map("leader_id") @db.Uuid
+  position    Int
+  text        String
+  dueDate     DateTime?      @map("due_date") @db.Date
+  owner       AgreementOwner @default(leader)
+  doneAt      DateTime?      @map("done_at") @db.Timestamptz(3)
+  agreementId String?        @unique @map("agreement_id") @db.Uuid
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  note      Note       @relation(fields: [noteId], references: [id])
+  leader    Leader     @relation(fields: [leaderId], references: [id])
+  agreement Agreement? @relation(fields: [agreementId], references: [id])
+
+  @@index([noteId, position])
+  @@map("note_steps")
 }

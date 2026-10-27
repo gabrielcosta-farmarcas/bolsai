@@ -47,6 +47,8 @@ type Ids = {
   analysis: string;
   agreement: string;
   responsibility: string;
+  note: string;
+  step: string;
 };
 
 describe('isolamento entre líderes', () => {
@@ -109,7 +111,18 @@ describe('isolamento entre líderes', () => {
     const responsibility = (await asA().get(`${API}/direct-reports/${report}/responsibilities`))
       .body[0].id as string;
 
-    ids = { report, map, session, analysis: analysisId, agreement, responsibility };
+    const note = (
+      await asA()
+        .post(`${API}/direct-reports/${report}/notes`)
+        .send({ kind: 'attention', description: `Anotação ${SECRET}` })
+    ).body.id as string;
+    const step = (
+      await asA()
+        .post(`${API}/notes/${note}/steps`)
+        .send({ text: `Passo ${SECRET}` })
+    ).body.steps[0].id as string;
+
+    ids = { report, map, session, analysis: analysisId, agreement, responsibility, note, step };
   });
 
   afterAll(async () => {
@@ -163,6 +176,19 @@ describe('isolamento entre líderes', () => {
       () => ({ description: 'x', owner: 'leader' }),
     ],
     ['patch', () => `${API}/agreements/${ids.agreement}`, () => ({ status: 'done' })],
+    ['get', () => `${API}/direct-reports/${ids.report}/notes`],
+    ['get', () => `${API}/direct-reports/${ids.report}/notes/for-next-session`],
+    [
+      'post',
+      () => `${API}/direct-reports/${ids.report}/notes`,
+      () => ({ kind: 'praise', description: 'x' }),
+    ],
+    ['patch', () => `${API}/notes/${ids.note}`, () => ({ resolved: true })],
+    ['delete', () => `${API}/notes/${ids.note}`],
+    ['post', () => `${API}/notes/${ids.note}/steps`, () => ({ text: 'x' })],
+    ['patch', () => `${API}/notes/${ids.note}/steps/${ids.step}`, () => ({ done: true })],
+    ['post', () => `${API}/notes/${ids.note}/steps/${ids.step}/agreement`],
+    ['delete', () => `${API}/notes/${ids.note}/steps/${ids.step}`],
     ['get', () => `${API}/direct-reports/${ids.report}/timeline`],
     ['get', () => `${API}/direct-reports/${ids.report}/preparations/latest`],
     ['post', () => `${API}/direct-reports/${ids.report}/preparations`, () => ({})],

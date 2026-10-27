@@ -20,13 +20,21 @@ import {
   useRenameResponsibility,
   useResponsibilities,
 } from '@/features/responsibilities';
+import { NextSessionNotes, NotesPanel, useNotes } from '@/features/notes';
 import { PreparationPanel, usePreparation, useStartPreparation } from '@/features/preparation';
 import { SessionList, useSessions } from '@/features/sessions';
 import { Timeline, useTimeline } from '@/features/timeline';
 import { formatCalendarDate } from '@/lib/format';
 
 const DEFAULT_TAB = 'encontros';
-const VALID_TABS = ['encontros', 'preparar', 'combinados', 'linha-do-tempo', 'responsograma'];
+const VALID_TABS = [
+  'encontros',
+  'preparar',
+  'combinados',
+  'anotacoes',
+  'linha-do-tempo',
+  'responsograma',
+];
 
 export function DirectReportPage() {
   const { id = '' } = useParams();
@@ -42,6 +50,7 @@ export function DirectReportPage() {
   const extract = useExtractProposal();
   const sessions = useSessions(id);
   const agreements = useReportAgreements(id);
+  const notes = useNotes(id);
   const timeline = useTimeline(id);
   const preparation = usePreparation(id);
   const startPreparation = useStartPreparation(id);
@@ -156,14 +165,17 @@ export function DirectReportPage() {
               id: 'preparar',
               label: 'Preparar 1:1',
               content: (
-                <PreparationPanel
-                  preparation={preparation.data}
-                  isLoading={preparation.isLoading}
-                  loadError={preparation.error?.message}
-                  isStarting={startPreparation.isPending}
-                  startError={startPreparation.error?.message}
-                  onStart={() => startPreparation.mutate()}
-                />
+                <>
+                  <NextSessionNotes directReportId={id} />
+                  <PreparationPanel
+                    preparation={preparation.data}
+                    isLoading={preparation.isLoading}
+                    loadError={preparation.error?.message}
+                    isStarting={startPreparation.isPending}
+                    startError={startPreparation.error?.message}
+                    onStart={() => startPreparation.mutate()}
+                  />
+                </>
               ),
             },
             {
@@ -171,6 +183,12 @@ export function DirectReportPage() {
               label: 'Combinados',
               count: agreements.data?.filter((item) => item.status === 'open').length,
               content: <ReportAgreements directReportId={id} />,
+            },
+            {
+              id: 'anotacoes',
+              label: 'Anotações',
+              count: notes.data?.counts.all,
+              content: <NotesPanel directReportId={id} />,
             },
             {
               id: 'linha-do-tempo',

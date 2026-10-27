@@ -24,3 +24,5 @@ export const canViewResponsibilityMap = (user: CurrentUser, map: OwnedRecord): b
 
 export const canViewResponsibility = (user: CurrentUser, responsibility: OwnedRecord): boolean =>
   isOwner(user, responsibility);
+
+export const canViewNote = (user: CurrentUser, note: OwnedRecord): boolean => isOwner(user, note);

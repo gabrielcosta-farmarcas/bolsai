@@ -7,6 +7,7 @@ import { requestId } from './shared/middlewares/request-id.js';
 import { directReportsRouter } from './modules/direct-reports/direct-reports.routes.js';
 import type { AnalysesService } from './modules/analyses/analyses.service.js';
 import { agreementsRouter } from './modules/agreements/agreements.routes.js';
+import { notesRouter } from './modules/notes/notes.routes.js';
 import { analysesRouter } from './modules/analyses/analyses.routes.js';
 import { preparationsRouter } from './modules/preparations/preparations.routes.js';
 import type { PreparationsService } from './modules/preparations/preparations.service.js';
@@ -149,6 +150,7 @@ export const createApp = (deps: AppDeps = {}) => {
   app.use('/api/v1', analysesRouter(deps.analysesService));
   app.use('/api/v1', preparationsRouter(deps.preparationsService));
   app.use('/api/v1', agreementsRouter());
+  app.use('/api/v1', notesRouter());
   app.use('/api/v1', timelineRouter());
   app.use('/api/v1', exportsRouter());
   app.use('/api/v1', settingsRouter(deps.settingsService));
