@@ -153,7 +153,7 @@ export function SessionPage() {
         </div>
       </header>
 
-      <div className="grid lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+      <div className="grid grid-cols-1 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
         <div className="bg-bg border-border flex min-h-0 flex-col border-b lg:border-r lg:border-b-0">
           <TranscriptPane
             transcript={session.data.transcript}
