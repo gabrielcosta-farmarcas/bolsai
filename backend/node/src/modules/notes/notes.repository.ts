@@ -13,17 +13,11 @@ const select = {
   resolvedAt: true,
   bringToNextSession: true,
   createdAt: true,
-  steps: {
-    select: {
-      id: true,
-      position: true,
-      text: true,
-      dueDate: true,
-      owner: true,
-      doneAt: true,
-      agreementId: true,
-    },
-    orderBy: { position: 'asc' },
+  // Combinados ligados à anotação (os cancelados saem da vista).
+  agreements: {
+    where: { status: { not: 'cancelled' } },
+    select: { id: true, description: true, owner: true, dueDate: true, status: true },
+    orderBy: { createdAt: 'asc' },
   },
 } as const satisfies Prisma.NoteSelect;
 
@@ -64,63 +58,23 @@ export const notesRepository: NotesRepository = {
     await prisma.note.update({ where: ownNote(leaderId, id), data: { deletedAt } });
   },
 
-  async addStep(leaderId, noteId, data) {
+  async addAgreement(leaderId, noteId, data, confirmedAt) {
     await prisma.$transaction(async (tx) => {
-      await tx.note.findFirstOrThrow({ where: ownNote(leaderId, noteId), select: { id: true } });
-      const last = await tx.noteStep.aggregate({
-        where: { noteId },
-        _max: { position: true },
+      const note = await tx.note.findFirstOrThrow({
+        where: ownNote(leaderId, noteId),
+        select: { directReportId: true },
       });
-      await tx.noteStep.create({
-        data: { ...data, noteId, leaderId, position: (last._max.position ?? 0) + 1 },
-      });
-    });
-    return reload(leaderId, noteId);
-  },
-
-  async updateStep(leaderId, noteId, stepId, changes) {
-    await prisma.noteStep.update({
-      where: { id: stepId, noteId, leaderId, note: visibleFor(leaderId) },
-      data: changes,
-    });
-    return reload(leaderId, noteId);
-  },
-
-  async removeStep(leaderId, noteId, stepId) {
-    await prisma.noteStep.delete({
-      where: { id: stepId, noteId, leaderId, note: visibleFor(leaderId) },
-    });
-    return reload(leaderId, noteId);
-  },
-
-  async promoteStep(leaderId, noteId, stepId, confirmedAt) {
-    await prisma.$transaction(async (tx) => {
-      const step = await tx.noteStep.findFirstOrThrow({
-        where: { id: stepId, noteId, leaderId, note: visibleFor(leaderId) },
-        select: {
-          text: true,
-          dueDate: true,
-          owner: true,
-          agreementId: true,
-          note: { select: { directReportId: true } },
-        },
-      });
-      // Outra chamada pode ter promovido o passo no meio do caminho: não cria um segundo Combinado.
-      if (step.agreementId) return;
-      const agreement = await tx.agreement.create({
+      await tx.agreement.create({
         data: {
+          ...data,
           leaderId,
-          directReportId: step.note.directReportId,
-          description: step.text,
-          owner: step.owner,
-          dueDate: step.dueDate,
+          directReportId: note.directReportId,
+          noteId,
           origin: 'leader',
           status: 'open',
           confirmedAt,
         },
-        select: { id: true },
       });
-      await tx.noteStep.update({ where: { id: stepId }, data: { agreementId: agreement.id } });
     });
     return reload(leaderId, noteId);
   },

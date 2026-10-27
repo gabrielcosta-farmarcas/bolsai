@@ -8,7 +8,7 @@ import { NoteItem } from './NoteItem';
 
 type NotesPanelProps = { directReportId: string };
 
-// Aba "Anotações" da pessoa: o que aconteceu, o plano de ação e a situação de cada ponto.
+// Aba "Anotações" da pessoa: o que aconteceu e os combinados que saíram de cada ponto.
 export function NotesPanel({ directReportId }: NotesPanelProps) {
   const notes = useNotes(directReportId);
   const create = useCreateNote(directReportId);
@@ -23,7 +23,8 @@ export function NotesPanel({ directReportId }: NotesPanelProps) {
     <section aria-label="Anotações">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-text-muted max-w-reading">
-          Só você vê estas anotações. Registre o que aconteceu e pense no que fazer a respeito.
+          Só você vê estas anotações. Registre o que aconteceu e, quando decidir o que fazer, crie
+          um combinado.
         </p>
         {!isAdding ? <Button onClick={() => setIsAdding(true)}>Nova anotação</Button> : null}
       </div>

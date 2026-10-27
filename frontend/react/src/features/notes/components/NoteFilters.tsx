@@ -3,8 +3,7 @@ import type { NoteFilter, NoteList } from '../types';
 
 const FILTERS: Array<{ id: NoteFilter; label: string }> = [
   { id: 'all', label: 'Todas' },
-  { id: 'no_plan', label: 'Sem plano' },
-  { id: 'in_progress', label: 'Em andamento' },
+  { id: 'open', label: 'Abertas' },
   { id: 'resolved', label: 'Resolvidas' },
 ];
 

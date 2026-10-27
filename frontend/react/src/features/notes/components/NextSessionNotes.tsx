@@ -17,7 +17,7 @@ export function NextSessionNotes({ directReportId }: NextSessionNotesProps) {
       <h3>Anotações para este encontro</h3>
       <ul className="mt-3 grid gap-4">
         {notes.data.map((note) => {
-          const open = note.steps.filter((step) => !step.done);
+          const open = note.agreements.filter((agreement) => agreement.status === 'open');
           return (
             <li key={note.id}>
               <p className="text-text-muted text-caption">
@@ -26,8 +26,8 @@ export function NextSessionNotes({ directReportId }: NextSessionNotesProps) {
               <p className="whitespace-pre-line">{note.description}</p>
               {open.length > 0 ? (
                 <ul className="text-text-muted mt-1 list-disc pl-5 text-body-sm">
-                  {open.map((step) => (
-                    <li key={step.id}>{step.text}</li>
+                  {open.map((agreement) => (
+                    <li key={agreement.id}>{agreement.description}</li>
                   ))}
                 </ul>
               ) : null}

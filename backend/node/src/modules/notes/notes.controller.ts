@@ -3,14 +3,12 @@ import type { z } from 'zod';
 import { readValidated } from '../../shared/middlewares/validate.js';
 import { getCurrentUser } from '../../shared/security/current-user.js';
 import type {
-  addStepRequestSchema,
+  addAgreementRequestSchema,
   createNoteRequestSchema,
   listNotesRequestSchema,
   noteRequestSchema,
   reportRequestSchema,
-  stepRequestSchema,
   updateNoteRequestSchema,
-  updateStepRequestSchema,
 } from './notes.schemas.js';
 import type { NotesService } from './notes.service.js';
 
@@ -41,23 +39,8 @@ export const makeNotesController = (service: NotesService) => ({
     res.status(204).end();
   },
 
-  async addStep(_req: Request, res: Response) {
-    const { params, body } = readValidated<z.infer<typeof addStepRequestSchema>>(res);
-    res.status(201).json(await service.addStep(getCurrentUser(), params.id, body));
-  },
-
-  async updateStep(_req: Request, res: Response) {
-    const { params, body } = readValidated<z.infer<typeof updateStepRequestSchema>>(res);
-    res.json(await service.updateStep(getCurrentUser(), params.id, params.stepId, body));
-  },
-
-  async removeStep(_req: Request, res: Response) {
-    const { params } = readValidated<z.infer<typeof stepRequestSchema>>(res);
-    res.json(await service.removeStep(getCurrentUser(), params.id, params.stepId));
-  },
-
-  async promoteStep(_req: Request, res: Response) {
-    const { params } = readValidated<z.infer<typeof stepRequestSchema>>(res);
-    res.json(await service.promoteStep(getCurrentUser(), params.id, params.stepId));
+  async addAgreement(_req: Request, res: Response) {
+    const { params, body } = readValidated<z.infer<typeof addAgreementRequestSchema>>(res);
+    res.status(201).json(await service.addAgreement(getCurrentUser(), params.id, body));
   },
 });

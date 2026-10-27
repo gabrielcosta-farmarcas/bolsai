@@ -36,18 +36,16 @@ describe('notes', () => {
     const report = await createReport();
     const first = await createNote(report, 'Primeira');
     await createNote(report, 'Segunda');
-    expect(first.status).toBe('no_plan');
+    expect(first.status).toBe('open');
 
-    await authed(app).post(`${API}/notes/${first.id}/steps`).send({ text: 'Conversar' });
+    await authed(app).patch(`${API}/notes/${first.id}`).send({ resolved: true });
 
     const all = await authed(app).get(`${API}/direct-reports/${report}/notes`);
     expect(all.status).toBe(200);
-    expect(all.body.counts).toEqual({ all: 2, no_plan: 1, in_progress: 1, resolved: 0 });
+    expect(all.body.counts).toEqual({ all: 2, open: 1, resolved: 1 });
 
-    const inProgress = await authed(app).get(
-      `${API}/direct-reports/${report}/notes?status=in_progress`,
-    );
-    expect(inProgress.body.data.map((n: { id: string }) => n.id)).toEqual([first.id]);
+    const resolved = await authed(app).get(`${API}/direct-reports/${report}/notes?status=resolved`);
+    expect(resolved.body.data.map((n: { id: string }) => n.id)).toEqual([first.id]);
   });
 
   it('valida descrição vazia, longa demais e data inválida', async () => {
@@ -74,7 +72,7 @@ describe('notes', () => {
     const resolved = await authed(app).patch(`${API}/notes/${note.id}`).send({ resolved: true });
     expect(resolved.body.status).toBe('resolved');
     const reopened = await authed(app).patch(`${API}/notes/${note.id}`).send({ resolved: false });
-    expect(reopened.body.status).toBe('no_plan');
+    expect(reopened.body.status).toBe('open');
 
     expect((await authed(app).delete(`${API}/notes/${note.id}`)).status).toBe(204);
     const list = await authed(app).get(`${API}/direct-reports/${report}/notes`);
@@ -84,57 +82,41 @@ describe('notes', () => {
     ).toBe(404);
   });
 
-  it('monta o plano: passos, progresso, atraso, edição e remoção', async () => {
+  it('cria combinados a partir da anotação e eles aparecem em Combinados', async () => {
     const report = await createReport();
     const note = await createNote(report);
-    const add = (body: object) => authed(app).post(`${API}/notes/${note.id}/steps`).send(body);
+    const add = (body: object) => authed(app).post(`${API}/notes/${note.id}/agreements`).send(body);
 
-    await add({ text: 'Conversar', dueDate: '2020-01-01' });
-    await add({ text: 'Combinar prazo', owner: 'report' });
-    const third = await add({ text: 'Revisitar' });
-    expect(third.body.status).toBe('in_progress');
-    expect(third.body.steps.map((s: { position: number }) => s.position)).toEqual([1, 2, 3]);
-    expect(third.body.steps[0].isOverdue).toBe(true);
-    expect(third.body.steps[1].owner).toBe('report');
-
-    const stepId = third.body.steps[0].id as string;
-    const done = await authed(app)
-      .patch(`${API}/notes/${note.id}/steps/${stepId}`)
-      .send({ done: true });
-    expect(done.body.progress).toEqual({ done: 1, total: 3 });
-    expect(done.body.steps[0].isOverdue).toBe(false);
-
-    const removed = await authed(app).delete(`${API}/notes/${note.id}/steps/${stepId}`);
-    expect(removed.body.steps).toHaveLength(2);
-
-    for (const step of removed.body.steps as Array<{ id: string }>)
-      await authed(app).delete(`${API}/notes/${note.id}/steps/${step.id}`);
-    const empty = await authed(app).get(`${API}/direct-reports/${report}/notes`);
-    expect(empty.body.data[0].status).toBe('no_plan');
-  });
-
-  it('promove o passo a Combinado sem duplicar', async () => {
-    const report = await createReport();
-    const note = await createNote(report);
-    const added = await authed(app)
-      .post(`${API}/notes/${note.id}/steps`)
-      .send({ text: 'Entregar o relatório', dueDate: '2026-10-30', owner: 'report' });
-    const stepId = added.body.steps[0].id as string;
-
-    const first = await authed(app).post(`${API}/notes/${note.id}/steps/${stepId}/agreement`);
-    expect(first.status).toBe(200);
-    expect(first.body.steps[0].agreementId).toBeTruthy();
-    const second = await authed(app).post(`${API}/notes/${note.id}/steps/${stepId}/agreement`);
-    expect(second.body.steps[0].agreementId).toBe(first.body.steps[0].agreementId);
-
-    const agreements = await authed(app).get(`${API}/direct-reports/${report}/agreements`);
-    expect(agreements.body).toHaveLength(1);
-    expect(agreements.body[0]).toMatchObject({
+    const first = await add({
       description: 'Entregar o relatório',
       owner: 'report',
-      dueDate: '2026-10-30',
-      origin: 'leader',
+      dueDate: '2020-01-01',
     });
+    expect(first.status).toBe(201);
+    expect(first.body.agreements).toHaveLength(1);
+    expect(first.body.agreements[0]).toMatchObject({
+      description: 'Entregar o relatório',
+      owner: 'report',
+      dueDate: '2020-01-01',
+      status: 'open',
+      isOverdue: true,
+    });
+    await add({ description: 'Rever a ferramenta', owner: 'leader' });
+
+    expect((await add({ description: '   ', owner: 'leader' })).status).toBe(400);
+    expect((await add({ description: 'x', owner: 'outro' })).status).toBe(400);
+
+    const agreements = await authed(app).get(`${API}/direct-reports/${report}/agreements`);
+    expect(agreements.body).toHaveLength(2);
+    expect(agreements.body[0]).toMatchObject({ origin: 'leader', status: 'open' });
+
+    // Fechar pelo Combinado reflete na anotação; cancelar tira da anotação.
+    const [one, two] = agreements.body as Array<{ id: string; description: string }>;
+    await authed(app).patch(`${API}/agreements/${one!.id}`).send({ status: 'done' });
+    await authed(app).patch(`${API}/agreements/${two!.id}`).send({ status: 'cancelled' });
+    const list = await authed(app).get(`${API}/direct-reports/${report}/notes`);
+    expect(list.body.data[0].agreements).toHaveLength(1);
+    expect(list.body.data[0].agreements[0]).toMatchObject({ status: 'done', isOverdue: false });
   });
 
   it('lista para o próximo encontro só as marcadas e não resolvidas', async () => {

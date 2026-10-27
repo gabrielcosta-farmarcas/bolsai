@@ -4,24 +4,22 @@ Base `/api/v1`. Só a líder dona; outra pessoa recebe `404`. Erros no formato p
 
 | Método e rota | Faz | Corpo / resposta |
 | --- | --- | --- |
-| `GET /direct-reports/:id/notes?status=no_plan\|in_progress\|resolved` | Lista da pessoa, mais recente primeiro | `{ data: Note[], counts: { all, no_plan, in_progress, resolved } }` |
+| `GET /direct-reports/:id/notes?status=open\|resolved` | Lista da pessoa, mais recente primeiro | `{ data: Note[], counts: { all, open, resolved } }` |
 | `POST /direct-reports/:id/notes` | Cria | `{ kind, description, notedAt? }` → `Note` |
 | `PATCH /notes/:id` | Edita ou muda a marca | `{ kind?, description?, notedAt?, resolved?: boolean, bringToNextSession?: boolean }` → `Note` |
 | `DELETE /notes/:id` | Exclui (lógica) | `204` |
-| `POST /notes/:id/steps` | Adiciona passo | `{ text, dueDate?, owner? }` → `Note` |
-| `PATCH /notes/:id/steps/:stepId` | Edita ou marca feito | `{ text?, dueDate?, owner?, done?: boolean }` → `Note` |
-| `DELETE /notes/:id/steps/:stepId` | Remove passo | `Note` |
-| `POST /notes/:id/steps/:stepId/agreement` | Promove a Combinado | `Note` (passo com `agreementId`); repetir não duplica |
+| `POST /notes/:id/agreements` | Cria um combinado ligado à anotação | `{ description, owner: leader\|report, dueDate? }` → `Note` |
 | `GET /direct-reports/:id/notes/for-next-session` | Anotações marcadas e não resolvidas | `Note[]` |
 
 ## Note
 ```
 { id, directReportId, kind, description, notedAt, status, bringToNextSession,
   resolvedAt, createdAt,
-  steps: [{ id, position, text, dueDate, owner, done, doneAt, isOverdue, agreementId }],
-  progress: { done, total } }
+  agreements: [{ id, description, owner, dueDate, status: open|done, isOverdue }] }
 ```
 
 ## Validação
-- `description`: 1–2.000; `text` do passo: 1–500; datas `AAAA-MM-DD`; `kind` e `owner` dos valores acima.
-- `code: "validation_error"` para erro de campo; `NOTE_NOT_FOUND`, `STEP_NOT_FOUND`, `DIRECT_REPORT_NOT_FOUND` para 404.
+- `description`: 1–2.000; `description` do combinado: 1–2.000; datas `AAAA-MM-DD`; `kind` e `owner` dos valores acima.
+- `code: "validation_error"` para erro de campo; `NOTE_NOT_FOUND`, `DIRECT_REPORT_NOT_FOUND` para 404.
+
+Marcar como feito ou cancelar um combinado da anotação usa a rota existente `PATCH /agreements/:id` (`status`).

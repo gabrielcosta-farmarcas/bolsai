@@ -1,19 +1,16 @@
 export type NoteKind = 'agreement_missed' | 'attention' | 'praise';
-export type NoteStatus = 'no_plan' | 'in_progress' | 'resolved';
-export type StepOwner = 'leader' | 'report';
+export type NoteStatus = 'open' | 'resolved';
+export type AgreementOwner = 'leader' | 'report';
 export type NoteFilter = 'all' | NoteStatus;
 
-export type NoteStep = {
+// Combinado ligado à anotação (o mesmo que aparece na aba Combinados da pessoa).
+export type NoteAgreement = {
   id: string;
-  position: number;
-  text: string;
+  description: string;
+  owner: AgreementOwner;
   dueDate: string | null;
-  owner: StepOwner;
-  done: boolean;
-  doneAt: string | null;
+  status: 'open' | 'done';
   isOverdue: boolean;
-  // Preenchido quando o passo já virou Combinado.
-  agreementId: string | null;
 };
 
 export type Note = {
@@ -26,22 +23,23 @@ export type Note = {
   bringToNextSession: boolean;
   resolvedAt: string | null;
   createdAt: string;
-  steps: NoteStep[];
-  progress: { done: number; total: number };
+  agreements: NoteAgreement[];
 };
 
 export type NoteList = {
   data: Note[];
-  counts: { all: number; no_plan: number; in_progress: number; resolved: number };
+  counts: { all: number; open: number; resolved: number };
 };
 
 export type NoteInput = { kind: NoteKind; description: string; notedAt: string };
 
 export type NotePatch = Partial<NoteInput> & { resolved?: boolean; bringToNextSession?: boolean };
 
-export type StepInput = { text: string; dueDate: string | null; owner: StepOwner };
-
-export type StepPatch = Partial<StepInput> & { done?: boolean };
+export type NoteAgreementInput = {
+  description: string;
+  dueDate: string | null;
+  owner: AgreementOwner;
+};
 
 export const KIND_LABEL: Record<NoteKind, string> = {
   agreement_missed: 'Combinado não cumprido',
@@ -49,4 +47,4 @@ export const KIND_LABEL: Record<NoteKind, string> = {
   praise: 'Elogio',
 };
 
-export const OWNER_LABEL: Record<StepOwner, string> = { leader: 'Você', report: 'A pessoa' };
+export const OWNER_LABEL: Record<AgreementOwner, string> = { leader: 'Você', report: 'A pessoa' };

@@ -2,55 +2,55 @@ import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/Button';
 import { SelectField } from '@/components/ui/SelectField';
 import { TextField } from '@/components/ui/TextField';
-import { OWNER_LABEL, type StepInput, type StepOwner } from '../types';
+import { OWNER_LABEL, type AgreementOwner, type NoteAgreementInput } from '../types';
 
-const MAX_TEXT = 500;
+const MAX_TEXT = 2000;
 
-const OWNER_OPTIONS = (Object.keys(OWNER_LABEL) as StepOwner[]).map((value) => ({
+const OWNER_OPTIONS = (Object.keys(OWNER_LABEL) as AgreementOwner[]).map((value) => ({
   value,
   label: OWNER_LABEL[value],
 }));
 
-type StepFormProps = {
-  submitLabel: string;
-  initialValues?: StepInput;
+type NoteAgreementFormProps = {
   isSaving: boolean;
   errorMessage?: string;
-  onSubmit: (input: StepInput) => void;
+  onSubmit: (input: NoteAgreementInput) => void;
   onCancel: () => void;
 };
 
-export function StepForm({
-  submitLabel,
-  initialValues,
+export function NoteAgreementForm({
   isSaving,
   errorMessage,
   onSubmit,
   onCancel,
-}: StepFormProps) {
-  const [text, setText] = useState(initialValues?.text ?? '');
-  const [dueDate, setDueDate] = useState(initialValues?.dueDate ?? '');
-  const [owner, setOwner] = useState<StepOwner>(initialValues?.owner ?? 'leader');
+}: NoteAgreementFormProps) {
+  const [description, setDescription] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [owner, setOwner] = useState<AgreementOwner>('leader');
   const [fieldError, setFieldError] = useState<string>();
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const value = text.trim();
+    const value = description.trim();
     if (value.length === 0) {
-      setFieldError('Descreva o passo.');
+      setFieldError('Descreva o combinado.');
       return;
     }
     if (value.length > MAX_TEXT) {
-      setFieldError(`O passo passou ${value.length - MAX_TEXT} caracteres do limite.`);
+      setFieldError(`O combinado passou ${value.length - MAX_TEXT} caracteres do limite.`);
       return;
     }
     setFieldError(undefined);
-    onSubmit({ text: value, dueDate: dueDate || null, owner });
+    onSubmit({ description: value, dueDate: dueDate || null, owner });
   };
 
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-3 py-3">
-      <TextField label="Passo" value={text} onChange={(event) => setText(event.target.value)} />
+      <TextField
+        label="Combinado"
+        value={description}
+        onChange={(event) => setDescription(event.target.value)}
+      />
       <div className="grid gap-3 sm:grid-cols-2">
         <TextField
           label="Prazo (opcional)"
@@ -62,7 +62,7 @@ export function StepForm({
           label="Responsável"
           value={owner}
           options={OWNER_OPTIONS}
-          onChange={(event) => setOwner(event.target.value as StepOwner)}
+          onChange={(event) => setOwner(event.target.value as AgreementOwner)}
         />
       </div>
       {fieldError || errorMessage ? (
@@ -75,7 +75,7 @@ export function StepForm({
           Cancelar
         </Button>
         <Button type="submit" size="sm" disabled={isSaving}>
-          {submitLabel}
+          Adicionar combinado
         </Button>
       </div>
     </form>

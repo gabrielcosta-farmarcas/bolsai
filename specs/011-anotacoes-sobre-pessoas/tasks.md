@@ -36,3 +36,9 @@ Ordem: Base → US1 (anotar) → US2 (plano) → US3 (combinado e encontro) → 
 - [x] T020 Textos da tela revisados no tom do Bonsai (sem "cobrança", "desempenho", "nota", "monitorar") e cores só por tokens (`frontend/BRAND.md`)
 - [x] T021 Testes, lint e tipos passando na API e na tela; rodar `scripts/validar-frontend.sh`
 - [x] T022 Roteiro de `quickstart.md` no ambiente local (`docker compose up -d --build --wait`), conferência visual no navegador e informar a URL
+
+## Revisão de 2026-10-27 — passos viram combinados
+- [x] T023 Migration `notes_use_agreements`: `agreements.note_id`; passos existentes viram combinados ligados; remove `note_steps`
+- [x] T024 API: remove rotas e módulo de passos e `notes.status`; `POST /notes/:id/agreements`; situação só aberta/resolvida; testes unitários, de integração e de isolamento atualizados
+- [x] T025 Tela: `NoteAgreements` e `NoteAgreementForm` no lugar de `PlanSteps`/`StepForm`; filtros Todas/Abertas/Resolvidas; bloco do Preparar 1:1 lista combinados abertos; testes atualizados
+- [x] T026 Spec, contrato, modelo e quickstart atualizados; conferência no navegador com limpeza dos dados de teste

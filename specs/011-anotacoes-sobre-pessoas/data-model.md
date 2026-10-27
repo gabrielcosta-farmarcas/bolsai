@@ -19,29 +19,20 @@
 
 Índices: `(direct_report_id, noted_at desc)` parcial onde `deleted_at is null`; `(leader_id)`.
 
-## `note_steps`
+## `agreements` (existente) — coluna nova
 | Campo | Tipo | Regra |
 | --- | --- | --- |
-| id | uuid v7 | PK |
-| note_id | uuid | FK notes |
-| leader_id | uuid | FK leaders (isolamento) |
-| position | int | ordem na lista |
-| text | text | obrigatório, 1 a 500 |
-| due_date | date? | opcional |
-| owner | agreement_owner | `leader` (padrão) ou `report` |
-| done_at | timestamptz? | preenchido = feito |
-| agreement_id | uuid? | FK agreements; preenchido = já virou Combinado (único por passo) |
-| created_at / updated_at | timestamptz | |
+| note_id | uuid? | FK notes; preenchido = combinado nascido de uma anotação |
 
-Índice: `(note_id, position)`.
+Índice: `(note_id)`. A anotação mostra só os combinados dela que não estão cancelados.
 
 ## Situação (calculada, não guardada)
-- `resolved_at` não nulo → `resolved`
-- senão, passos ≥ 1 → `in_progress`
-- senão → `no_plan`
+- `resolved_at` não nulo → `resolved`; senão → `open`.
 
 ## Regras de transição
-- Adicionar o primeiro passo: `no_plan` → `in_progress`. Remover o último: volta a `no_plan`.
 - Resolver: grava `resolved_at`, zera `bring_to_next_session`. Reabrir: limpa `resolved_at`.
-- Passo atrasado: `due_date` anterior a hoje, sem `done_at` (calculado na resposta).
-- Promover: só se `agreement_id` for nulo; cria Combinado com texto, prazo e responsável do passo.
+- Combinado atrasado: aberto e `due_date` anterior a hoje (calculado na resposta).
+- Criar combinado na anotação: `origin = leader`, aberto, confirmado na hora, da pessoa da anotação.
+
+## Histórico
+A primeira versão tinha a tabela `note_steps` (passos do plano). A migration `notes_use_agreements` converteu cada passo em combinado ligado à anotação e removeu a tabela.

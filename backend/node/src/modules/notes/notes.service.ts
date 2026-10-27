@@ -2,17 +2,14 @@ import { fromCalendarDate, toCalendarDate, todayInSaoPaulo } from '../../shared/
 import { NotFoundError } from '../../shared/errors/not-found-error.js';
 import { canViewDirectReport, canViewNote } from '../../shared/security/authorization.js';
 import type { CurrentUser } from '../../shared/security/current-user.js';
-import type { NoteKind, NoteStatus, StepOwner } from './notes.schemas.js';
-import { computeNoteStatus, isStepOverdue } from './notes.status.js';
+import type { AgreementOwner, NoteKind, NoteStatus } from './notes.schemas.js';
 
-export type StepRecord = {
+export type NoteAgreementRecord = {
   id: string;
-  position: number;
-  text: string;
+  description: string;
+  owner: AgreementOwner;
   dueDate: Date | null;
-  owner: StepOwner;
-  doneAt: Date | null;
-  agreementId: string | null;
+  status: 'open' | 'done' | 'cancelled';
 };
 
 export type NoteRecord = {
@@ -25,7 +22,7 @@ export type NoteRecord = {
   resolvedAt: Date | null;
   bringToNextSession: boolean;
   createdAt: Date;
-  steps: StepRecord[];
+  agreements: NoteAgreementRecord[];
 };
 
 export type NoteChanges = {
@@ -34,13 +31,6 @@ export type NoteChanges = {
   notedAt?: Date;
   resolvedAt?: Date | null;
   bringToNextSession?: boolean;
-};
-
-export type StepChanges = {
-  text?: string;
-  dueDate?: Date | null;
-  owner?: StepOwner;
-  doneAt?: Date | null;
 };
 
 export type NotesRepository = {
@@ -54,23 +44,11 @@ export type NotesRepository = {
   ) => Promise<NoteRecord>;
   update: (leaderId: string, id: string, changes: NoteChanges) => Promise<NoteRecord>;
   remove: (leaderId: string, id: string, deletedAt: Date) => Promise<void>;
-  addStep: (
+  // Cria o Combinado da pessoa já ligado à anotação.
+  addAgreement: (
     leaderId: string,
     noteId: string,
-    data: { text: string; dueDate: Date | null; owner: StepOwner },
-  ) => Promise<NoteRecord>;
-  updateStep: (
-    leaderId: string,
-    noteId: string,
-    stepId: string,
-    changes: StepChanges,
-  ) => Promise<NoteRecord>;
-  removeStep: (leaderId: string, noteId: string, stepId: string) => Promise<NoteRecord>;
-  // Cria o Combinado e grava o vínculo no passo, na mesma transação.
-  promoteStep: (
-    leaderId: string,
-    noteId: string,
-    stepId: string,
+    data: { description: string; owner: AgreementOwner; dueDate: Date | null },
     confirmedAt: Date,
   ) => Promise<NoteRecord>;
 };
@@ -83,16 +61,13 @@ type Deps = {
   now?: () => Date;
 };
 
-export type StepDto = {
+export type NoteAgreementDto = {
   id: string;
-  position: number;
-  text: string;
+  description: string;
+  owner: AgreementOwner;
   dueDate: string | null;
-  owner: StepOwner;
-  done: boolean;
-  doneAt: string | null;
+  status: 'open' | 'done';
   isOverdue: boolean;
-  agreementId: string | null;
 };
 
 export type NoteDto = {
@@ -105,8 +80,7 @@ export type NoteDto = {
   bringToNextSession: boolean;
   resolvedAt: string | null;
   createdAt: string;
-  steps: StepDto[];
-  progress: { done: number; total: number };
+  agreements: NoteAgreementDto[];
 };
 
 export type NotesService = ReturnType<typeof makeNotesService>;
@@ -114,21 +88,18 @@ export type NotesService = ReturnType<typeof makeNotesService>;
 export const makeNotesService = ({ repo, reports, now = () => new Date() }: Deps) => {
   const toDto = (record: NoteRecord): NoteDto => {
     const today = todayInSaoPaulo(now());
-    const steps = [...record.steps]
-      .sort((a, b) => a.position - b.position)
-      .map((step): StepDto => {
-        const dueDate = toCalendarDate(step.dueDate);
-        const done = step.doneAt !== null;
+    const agreements = record.agreements
+      .filter((item) => item.status !== 'cancelled')
+      .map((item): NoteAgreementDto => {
+        const dueDate = toCalendarDate(item.dueDate);
+        const status = item.status === 'done' ? 'done' : 'open';
         return {
-          id: step.id,
-          position: step.position,
-          text: step.text,
+          id: item.id,
+          description: item.description,
+          owner: item.owner,
           dueDate,
-          owner: step.owner,
-          done,
-          doneAt: step.doneAt?.toISOString() ?? null,
-          isOverdue: isStepOverdue({ dueDate, done }, today),
-          agreementId: step.agreementId,
+          status,
+          isOverdue: status === 'open' && dueDate !== null && dueDate < today,
         };
       });
     return {
@@ -137,12 +108,11 @@ export const makeNotesService = ({ repo, reports, now = () => new Date() }: Deps
       kind: record.kind,
       description: record.description,
       notedAt: toCalendarDate(record.notedAt) ?? '',
-      status: computeNoteStatus({ resolvedAt: record.resolvedAt, stepCount: steps.length }),
+      status: record.resolvedAt ? 'resolved' : 'open',
       bringToNextSession: record.bringToNextSession,
       resolvedAt: record.resolvedAt?.toISOString() ?? null,
       createdAt: record.createdAt.toISOString(),
-      steps,
-      progress: { done: steps.filter((step) => step.done).length, total: steps.length },
+      agreements,
     };
   };
 
@@ -161,13 +131,6 @@ export const makeNotesService = ({ repo, reports, now = () => new Date() }: Deps
     return record;
   };
 
-  const requireStep = async (user: CurrentUser, noteId: string, stepId: string) => {
-    const note = await requireNote(user, noteId);
-    const step = note.steps.find((item) => item.id === stepId);
-    if (!step) throw new NotFoundError('Passo não encontrado', 'STEP_NOT_FOUND');
-    return { note, step };
-  };
-
   const sortNewestFirst = (records: NoteRecord[]) =>
     [...records].sort(
       (a, b) =>
@@ -182,8 +145,7 @@ export const makeNotesService = ({ repo, reports, now = () => new Date() }: Deps
       );
       const counts = {
         all: all.length,
-        no_plan: all.filter((note) => note.status === 'no_plan').length,
-        in_progress: all.filter((note) => note.status === 'in_progress').length,
+        open: all.filter((note) => note.status === 'open').length,
         resolved: all.filter((note) => note.status === 'resolved').length,
       };
       const data = query.status ? all.filter((note) => note.status === query.status) : all;
@@ -243,49 +205,25 @@ export const makeNotesService = ({ repo, reports, now = () => new Date() }: Deps
       await repo.remove(user.leaderId, id, now());
     },
 
-    async addStep(
+    // Combinado a partir da anotação: aparece aqui e na aba Combinados da pessoa.
+    async addAgreement(
       user: CurrentUser,
       noteId: string,
-      input: { text: string; dueDate?: string | null; owner?: StepOwner },
+      input: { description: string; owner: AgreementOwner; dueDate?: string | null },
     ) {
       await requireNote(user, noteId);
       return toDto(
-        await repo.addStep(user.leaderId, noteId, {
-          text: input.text,
-          dueDate: input.dueDate ? fromCalendarDate(input.dueDate) : null,
-          owner: input.owner ?? 'leader',
-        }),
+        await repo.addAgreement(
+          user.leaderId,
+          noteId,
+          {
+            description: input.description,
+            owner: input.owner,
+            dueDate: input.dueDate ? fromCalendarDate(input.dueDate) : null,
+          },
+          now(),
+        ),
       );
-    },
-
-    async updateStep(
-      user: CurrentUser,
-      noteId: string,
-      stepId: string,
-      input: { text?: string; dueDate?: string | null; owner?: StepOwner; done?: boolean },
-    ) {
-      const { step } = await requireStep(user, noteId, stepId);
-      const changes: StepChanges = {
-        ...(input.text ? { text: input.text } : {}),
-        ...(input.dueDate !== undefined
-          ? { dueDate: input.dueDate ? fromCalendarDate(input.dueDate) : null }
-          : {}),
-        ...(input.owner ? { owner: input.owner } : {}),
-        ...(input.done === undefined ? {} : { doneAt: input.done ? (step.doneAt ?? now()) : null }),
-      };
-      return toDto(await repo.updateStep(user.leaderId, noteId, stepId, changes));
-    },
-
-    async removeStep(user: CurrentUser, noteId: string, stepId: string) {
-      await requireStep(user, noteId, stepId);
-      return toDto(await repo.removeStep(user.leaderId, noteId, stepId));
-    },
-
-    // Virar combinado: cria o Combinado da pessoa. Repetir devolve a anotação como está, sem duplicar.
-    async promoteStep(user: CurrentUser, noteId: string, stepId: string) {
-      const { note, step } = await requireStep(user, noteId, stepId);
-      if (step.agreementId) return toDto(note);
-      return toDto(await repo.promoteStep(user.leaderId, noteId, stepId, now()));
     },
   };
 };

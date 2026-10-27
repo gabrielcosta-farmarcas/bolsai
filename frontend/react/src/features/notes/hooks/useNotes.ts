@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import type { Note, NoteInput, NoteList, NotePatch, StepInput, StepPatch } from '../types';
+import type { Note, NoteAgreementInput, NoteInput, NoteList, NotePatch } from '../types';
 
 export const noteKeys = {
   all: ['notes'] as const,
@@ -37,7 +37,7 @@ function useRefresh() {
   return () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: noteKeys.all }),
-      // Virar combinado cria um Combinado: as listas dele também mudam.
+      // Combinados criados ou fechados aqui também aparecem nas listas de Combinados.
       queryClient.invalidateQueries({ queryKey: ['agreements'] }),
       queryClient.invalidateQueries({ queryKey: ['timeline'] }),
     ]);
@@ -69,38 +69,21 @@ export function useDeleteNote() {
   });
 }
 
-export function useAddStep() {
+export function useAddNoteAgreement() {
   const refresh = useRefresh();
   return useMutation({
-    mutationFn: ({ noteId, input }: { noteId: string; input: StepInput }) =>
-      apiFetch<Note>(`/api/v1/notes/${noteId}/steps`, json('POST', input)),
+    mutationFn: ({ noteId, input }: { noteId: string; input: NoteAgreementInput }) =>
+      apiFetch<Note>(`/api/v1/notes/${noteId}/agreements`, json('POST', input)),
     onSuccess: refresh,
   });
 }
 
-export function useUpdateStep() {
+// Fechar ou cancelar um combinado da anotação usa a mesma rota da aba Combinados.
+export function useChangeNoteAgreement() {
   const refresh = useRefresh();
   return useMutation({
-    mutationFn: ({ noteId, stepId, patch }: { noteId: string; stepId: string; patch: StepPatch }) =>
-      apiFetch<Note>(`/api/v1/notes/${noteId}/steps/${stepId}`, json('PATCH', patch)),
-    onSuccess: refresh,
-  });
-}
-
-export function useRemoveStep() {
-  const refresh = useRefresh();
-  return useMutation({
-    mutationFn: ({ noteId, stepId }: { noteId: string; stepId: string }) =>
-      apiFetch<Note>(`/api/v1/notes/${noteId}/steps/${stepId}`, json('DELETE')),
-    onSuccess: refresh,
-  });
-}
-
-export function usePromoteStep() {
-  const refresh = useRefresh();
-  return useMutation({
-    mutationFn: ({ noteId, stepId }: { noteId: string; stepId: string }) =>
-      apiFetch<Note>(`/api/v1/notes/${noteId}/steps/${stepId}/agreement`, json('POST')),
+    mutationFn: ({ id, status }: { id: string; status: 'open' | 'done' | 'cancelled' }) =>
+      apiFetch<unknown>(`/api/v1/agreements/${id}`, json('PATCH', { status })),
     onSuccess: refresh,
   });
 }

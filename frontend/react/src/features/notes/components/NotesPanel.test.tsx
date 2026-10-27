@@ -6,7 +6,7 @@ import type { NoteList } from '../types';
 import { NotesPanel } from './NotesPanel';
 
 const list: NoteList = {
-  counts: { all: 2, no_plan: 1, in_progress: 0, resolved: 1 },
+  counts: { all: 2, open: 1, resolved: 1 },
   data: [
     {
       id: 'n1',
@@ -14,12 +14,11 @@ const list: NoteList = {
       kind: 'agreement_missed',
       description: 'Relatório não entregue',
       notedAt: '2026-10-26',
-      status: 'no_plan',
+      status: 'open',
       bringToNextSession: false,
       resolvedAt: null,
       createdAt: '2026-10-26T12:00:00.000Z',
-      steps: [],
-      progress: { done: 0, total: 0 },
+      agreements: [],
     },
     {
       id: 'n2',
@@ -31,8 +30,7 @@ const list: NoteList = {
       bringToNextSession: false,
       resolvedAt: '2026-10-21T12:00:00.000Z',
       createdAt: '2026-10-20T12:00:00.000Z',
-      steps: [],
-      progress: { done: 0, total: 0 },
+      agreements: [],
     },
   ],
 };
@@ -60,7 +58,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('NotesPanel', () => {
   it('deve convidar a registrar o primeiro ponto quando não há anotações', async () => {
-    renderPanel({ data: [], counts: { all: 0, no_plan: 0, in_progress: 0, resolved: 0 } });
+    renderPanel({ data: [], counts: { all: 0, open: 0, resolved: 0 } });
     expect(await screen.findByText('Registre o primeiro ponto')).toBeInTheDocument();
   });
 
@@ -69,7 +67,7 @@ describe('NotesPanel', () => {
 
     expect(await screen.findByText('Relatório não entregue')).toBeInTheDocument();
     expect(screen.getByText('Conduziu bem a reunião')).toBeInTheDocument();
-    expect(screen.getByText('Sem plano ainda')).toBeInTheDocument();
+    expect(screen.getByText('Resolvida')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /Resolvidas 1/ }));
     expect(screen.queryByText('Relatório não entregue')).not.toBeInTheDocument();

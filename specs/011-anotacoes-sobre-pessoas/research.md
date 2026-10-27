@@ -1,3 +1,5 @@
+> **Revisão de 2026-10-27:** o plano de ação com passos (`note_steps`) foi retirado. O que fazer a respeito agora são Combinados ligados à anotação (`agreements.note_id`); a situação da anotação é só aberta ou resolvida. Onde este documento fala de passos, vale a nova regra (ver `spec.md` e `data-model.md`).
+
 # Research: Anotações sobre pessoas
 
 ## Onde guardar passos

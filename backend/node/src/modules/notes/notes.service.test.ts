@@ -5,20 +5,18 @@ import {
   makeNotesService,
   type NoteRecord,
   type NotesRepository,
-  type StepRecord,
+  type NoteAgreementRecord,
 } from './notes.service.js';
 
 const user = { leaderId: FIXED_LEADER_ID };
 const NOW = new Date('2026-10-05T15:00:00.000Z');
 
-const step = (overrides: Partial<StepRecord> = {}): StepRecord => ({
-  id: 's1',
-  position: 1,
-  text: 'Conversar sobre o que travou',
-  dueDate: null,
+const agreement = (overrides: Partial<NoteAgreementRecord> = {}): NoteAgreementRecord => ({
+  id: 'g1',
+  description: 'Conversar sobre o que travou',
   owner: 'leader',
-  doneAt: null,
-  agreementId: null,
+  dueDate: null,
+  status: 'open',
   ...overrides,
 });
 
@@ -32,7 +30,7 @@ const note = (overrides: Partial<NoteRecord> = {}): NoteRecord => ({
   resolvedAt: null,
   bringToNextSession: false,
   createdAt: new Date('2026-10-01T12:00:00.000Z'),
-  steps: [],
+  agreements: [],
   ...overrides,
 });
 
@@ -43,10 +41,7 @@ const setup = (current: NoteRecord = note(), reportExists = true) => {
     create: vi.fn().mockResolvedValue(current),
     update: vi.fn().mockResolvedValue(current),
     remove: vi.fn().mockResolvedValue(undefined),
-    addStep: vi.fn().mockResolvedValue(current),
-    updateStep: vi.fn().mockResolvedValue(current),
-    removeStep: vi.fn().mockResolvedValue(current),
-    promoteStep: vi.fn().mockResolvedValue(current),
+    addAgreement: vi.fn().mockResolvedValue(current),
   };
   const reports = {
     findById: vi
@@ -60,16 +55,16 @@ describe('notes service', () => {
   it('lista com contagens por situação e filtra', async () => {
     const records = [
       note({ id: 'a' }),
-      note({ id: 'b', steps: [step()] }),
+      note({ id: 'b', agreements: [agreement()] }),
       note({ id: 'c', resolvedAt: NOW }),
     ];
     const { repo, service } = setup();
     repo.listByReport = vi.fn().mockResolvedValue(records);
 
     const all = await service.list(user, 'r1', {});
-    expect(all.counts).toEqual({ all: 3, no_plan: 1, in_progress: 1, resolved: 1 });
-    const open = await service.list(user, 'r1', { status: 'in_progress' });
-    expect(open.data.map((n) => n.id)).toEqual(['b']);
+    expect(all.counts).toEqual({ all: 3, open: 2, resolved: 1 });
+    const resolved = await service.list(user, 'r1', { status: 'resolved' });
+    expect(resolved.data.map((n) => n.id)).toEqual(['c']);
   });
 
   it('lista da mais recente para a mais antiga', async () => {
@@ -102,27 +97,22 @@ describe('notes service', () => {
     });
   });
 
-  it('calcula progresso, ordem e atraso dos passos', async () => {
+  it('mostra os combinados da anotação, marca atraso e esconde cancelados', async () => {
     const { service } = setup(
       note({
-        steps: [
-          step({ id: 's2', position: 2, dueDate: new Date('2026-10-10T00:00:00.000Z') }),
-          step({ id: 's1', position: 1, dueDate: new Date('2026-10-01T00:00:00.000Z') }),
-          step({
-            id: 's3',
-            position: 3,
-            doneAt: NOW,
-            dueDate: new Date('2026-10-01T00:00:00.000Z'),
-          }),
+        agreements: [
+          agreement({ id: 'g1', dueDate: new Date('2026-10-01T00:00:00.000Z') }),
+          agreement({ id: 'g2', dueDate: new Date('2026-10-10T00:00:00.000Z') }),
+          agreement({ id: 'g3', status: 'done', dueDate: new Date('2026-10-01T00:00:00.000Z') }),
+          agreement({ id: 'g4', status: 'cancelled' }),
         ],
       }),
     );
     const { data } = await service.list(user, 'r1', {});
     const dto = data[0]!;
-    expect(dto.steps.map((s) => s.id)).toEqual(['s1', 's2', 's3']);
-    expect(dto.steps.map((s) => s.isOverdue)).toEqual([true, false, false]);
-    expect(dto.progress).toEqual({ done: 1, total: 3 });
-    expect(dto.status).toBe('in_progress');
+    expect(dto.agreements.map((a) => a.id)).toEqual(['g1', 'g2', 'g3']);
+    expect(dto.agreements.map((a) => a.isOverdue)).toEqual([true, false, false]);
+    expect(dto.status).toBe('open');
   });
 
   it('resolver grava a data e tira o lembrete do próximo encontro', async () => {
@@ -167,45 +157,31 @@ describe('notes service', () => {
     expect((await service.listForNextSession(user, 'r1')).map((n) => n.id)).toEqual(['a']);
   });
 
-  it('adiciona passo com responsável padrão a líder', async () => {
+  it('cria o combinado ligado à anotação', async () => {
     const { repo, service } = setup();
-    await service.addStep(user, 'n1', { text: 'Novo passo', dueDate: '2026-10-20' });
-    expect(repo.addStep).toHaveBeenCalledWith(FIXED_LEADER_ID, 'n1', {
-      text: 'Novo passo',
-      dueDate: new Date('2026-10-20T00:00:00.000Z'),
-      owner: 'leader',
+    await service.addAgreement(user, 'n1', {
+      description: 'Enviar o relatório',
+      owner: 'report',
+      dueDate: '2026-10-20',
     });
+    expect(repo.addAgreement).toHaveBeenCalledWith(
+      FIXED_LEADER_ID,
+      'n1',
+      {
+        description: 'Enviar o relatório',
+        owner: 'report',
+        dueDate: new Date('2026-10-20T00:00:00.000Z'),
+      },
+      NOW,
+    );
   });
 
-  it('marcar feito grava a data; desmarcar limpa; refazer não muda a data original', async () => {
-    const done = new Date('2026-10-02T10:00:00.000Z');
-    const { repo, service } = setup(note({ steps: [step({ doneAt: done })] }));
-    await service.updateStep(user, 'n1', 's1', { done: true });
-    expect(repo.updateStep).toHaveBeenLastCalledWith(FIXED_LEADER_ID, 'n1', 's1', {
-      doneAt: done,
-    });
-    await service.updateStep(user, 'n1', 's1', { done: false });
-    expect(repo.updateStep).toHaveBeenLastCalledWith(FIXED_LEADER_ID, 'n1', 's1', {
-      doneAt: null,
-    });
-  });
-
-  it('responde 404 para passo que não é da anotação', async () => {
-    const { service } = setup();
-    await expect(service.updateStep(user, 'n1', 'outro', { done: true })).rejects.toMatchObject({
-      code: 'STEP_NOT_FOUND',
-    });
-  });
-
-  it('promove o passo a Combinado e não promove duas vezes', async () => {
-    const { repo, service } = setup(note({ steps: [step()] }));
-    await service.promoteStep(user, 'n1', 's1');
-    expect(repo.promoteStep).toHaveBeenCalledTimes(1);
-
-    const already = setup(note({ steps: [step({ agreementId: 'g1' })] }));
-    const dto = await already.service.promoteStep(user, 'n1', 's1');
-    expect(already.repo.promoteStep).not.toHaveBeenCalled();
-    expect(dto.steps[0]?.agreementId).toBe('g1');
+  it('não cria combinado em anotação que não é da líder', async () => {
+    const { repo, service } = setup();
+    repo.findById = vi.fn().mockResolvedValue(null);
+    await expect(
+      service.addAgreement(user, 'x', { description: 'a', owner: 'leader' }),
+    ).rejects.toMatchObject({ code: 'NOTE_NOT_FOUND' });
   });
 
   it('exclui a anotação com a data de agora', async () => {

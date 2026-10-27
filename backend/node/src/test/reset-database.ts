@@ -6,9 +6,8 @@ import { createTestSession, setDefaultTestSession } from './auth.js';
 // A líder fixa (criada por migration) não é apagada, mas volta a ficar sem dono do Keycloak.
 // Ao final, cria a sessão de teste padrão usada por `authed(app)`.
 export const resetDatabase = async () => {
-  await prisma.noteStep.deleteMany();
-  await prisma.note.deleteMany();
   await prisma.agreement.deleteMany();
+  await prisma.note.deleteMany();
   await prisma.analysis.deleteMany();
   await prisma.preparation.deleteMany();
   await prisma.session.deleteMany();

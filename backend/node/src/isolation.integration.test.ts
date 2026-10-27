@@ -48,7 +48,6 @@ type Ids = {
   agreement: string;
   responsibility: string;
   note: string;
-  step: string;
 };
 
 describe('isolamento entre líderes', () => {
@@ -116,13 +115,7 @@ describe('isolamento entre líderes', () => {
         .post(`${API}/direct-reports/${report}/notes`)
         .send({ kind: 'attention', description: `Anotação ${SECRET}` })
     ).body.id as string;
-    const step = (
-      await asA()
-        .post(`${API}/notes/${note}/steps`)
-        .send({ text: `Passo ${SECRET}` })
-    ).body.steps[0].id as string;
-
-    ids = { report, map, session, analysis: analysisId, agreement, responsibility, note, step };
+    ids = { report, map, session, analysis: analysisId, agreement, responsibility, note };
   });
 
   afterAll(async () => {
@@ -185,10 +178,11 @@ describe('isolamento entre líderes', () => {
     ],
     ['patch', () => `${API}/notes/${ids.note}`, () => ({ resolved: true })],
     ['delete', () => `${API}/notes/${ids.note}`],
-    ['post', () => `${API}/notes/${ids.note}/steps`, () => ({ text: 'x' })],
-    ['patch', () => `${API}/notes/${ids.note}/steps/${ids.step}`, () => ({ done: true })],
-    ['post', () => `${API}/notes/${ids.note}/steps/${ids.step}/agreement`],
-    ['delete', () => `${API}/notes/${ids.note}/steps/${ids.step}`],
+    [
+      'post',
+      () => `${API}/notes/${ids.note}/agreements`,
+      () => ({ description: 'x', owner: 'leader' }),
+    ],
     ['get', () => `${API}/direct-reports/${ids.report}/timeline`],
     ['get', () => `${API}/direct-reports/${ids.report}/preparations/latest`],
     ['post', () => `${API}/direct-reports/${ids.report}/preparations`, () => ({})],

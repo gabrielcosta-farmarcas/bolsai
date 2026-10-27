@@ -4,25 +4,14 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { formatCalendarDate } from '@/lib/format';
 import {
-  useAddStep,
+  useAddNoteAgreement,
+  useChangeNoteAgreement,
   useDeleteNote,
-  usePromoteStep,
-  useRemoveStep,
   useUpdateNote,
-  useUpdateStep,
 } from '../hooks/useNotes';
-import { KIND_LABEL, type Note, type NoteStatus } from '../types';
+import { KIND_LABEL, type Note } from '../types';
+import { NoteAgreements } from './NoteAgreements';
 import { NoteForm } from './NoteForm';
-import { PlanSteps } from './PlanSteps';
-
-const STATUS_LABEL: Record<
-  NoteStatus,
-  { label: string; tone: 'attention' | 'neutral' | 'growth' }
-> = {
-  no_plan: { label: 'Sem plano ainda', tone: 'attention' },
-  in_progress: { label: 'Plano em andamento', tone: 'neutral' },
-  resolved: { label: 'Resolvida', tone: 'growth' },
-};
 
 type NoteItemProps = { note: Note; defaultOpen?: boolean };
 
@@ -32,21 +21,14 @@ export function NoteItem({ note, defaultOpen = false }: NoteItemProps) {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const update = useUpdateNote();
   const remove = useDeleteNote();
-  const addStep = useAddStep();
-  const updateStep = useUpdateStep();
-  const removeStep = useRemoveStep();
-  const promote = usePromoteStep();
+  const addAgreement = useAddNoteAgreement();
+  const changeAgreement = useChangeNoteAgreement();
 
-  const status = STATUS_LABEL[note.status];
-  const allDone = note.progress.total > 0 && note.progress.done === note.progress.total;
   const isResolved = note.status === 'resolved';
-  const stepsBusy =
-    addStep.isPending || updateStep.isPending || removeStep.isPending || promote.isPending;
-  const stepsError =
-    addStep.error?.message ??
-    updateStep.error?.message ??
-    removeStep.error?.message ??
-    promote.error?.message;
+  const allDone = note.agreements.length > 0 && note.agreements.every((a) => a.status === 'done');
+  const doneCount = note.agreements.filter((a) => a.status === 'done').length;
+  const agreementsBusy = addAgreement.isPending || changeAgreement.isPending;
+  const agreementsError = addAgreement.error?.message ?? changeAgreement.error?.message;
 
   return (
     <li className="bg-surface border-border rounded-lg border p-5">
@@ -54,16 +36,16 @@ export function NoteItem({ note, defaultOpen = false }: NoteItemProps) {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge tone="agreement">{KIND_LABEL[note.kind]}</StatusBadge>
-            <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
+            {isResolved ? <StatusBadge tone="growth">Resolvida</StatusBadge> : null}
             {note.bringToNextSession ? (
               <StatusBadge tone="growth">No próximo encontro</StatusBadge>
             ) : null}
           </div>
           <p className="text-text-muted mt-2 text-caption">{formatCalendarDate(note.notedAt)}</p>
           <p className="mt-1 whitespace-pre-line">{note.description}</p>
-          {!isOpen && note.progress.total > 0 ? (
+          {!isOpen && note.agreements.length > 0 ? (
             <p className="text-text-muted mt-1 text-body-sm">
-              {note.progress.done} de {note.progress.total} feitos
+              {doneCount} de {note.agreements.length} combinados feitos
             </p>
           ) : null}
         </div>
@@ -73,7 +55,7 @@ export function NoteItem({ note, defaultOpen = false }: NoteItemProps) {
           aria-expanded={isOpen}
           onClick={() => setIsOpen((open) => !open)}
         >
-          {isOpen ? 'Fechar' : 'Abrir plano'}
+          {isOpen ? 'Fechar' : 'Abrir'}
         </Button>
       </div>
 
@@ -99,21 +81,20 @@ export function NoteItem({ note, defaultOpen = false }: NoteItemProps) {
             </div>
           ) : null}
 
-          <PlanSteps
-            note={note}
-            isSaving={stepsBusy}
-            errorMessage={stepsError}
-            onAdd={(input, done) => addStep.mutate({ noteId: note.id, input }, { onSuccess: done })}
-            onChange={(stepId, patch, done) =>
-              updateStep.mutate({ noteId: note.id, stepId, patch }, { onSuccess: done })
+          <NoteAgreements
+            agreements={note.agreements}
+            isSaving={agreementsBusy}
+            errorMessage={agreementsError}
+            onAdd={(input, done) =>
+              addAgreement.mutate({ noteId: note.id, input }, { onSuccess: done })
             }
-            onRemove={(stepId) => removeStep.mutate({ noteId: note.id, stepId })}
-            onPromote={(stepId) => promote.mutate({ noteId: note.id, stepId })}
+            onToggle={(id, done) => changeAgreement.mutate({ id, status: done ? 'done' : 'open' })}
+            onCancel={(id) => changeAgreement.mutate({ id, status: 'cancelled' })}
           />
 
           {allDone && !isResolved ? (
             <p role="status" className="bg-primary-subtle text-body-sm mt-4 rounded-lg p-3">
-              Todos os passos foram feitos. Quer marcar a anotação como resolvida?
+              Todos os combinados foram feitos. Quer marcar a anotação como resolvida?
             </p>
           ) : null}
 
@@ -160,7 +141,7 @@ export function NoteItem({ note, defaultOpen = false }: NoteItemProps) {
       <ConfirmDialog
         isOpen={isConfirmingDelete}
         title="Excluir esta anotação?"
-        description="A anotação e o plano de ação dela deixam de aparecer. Combinados já criados a partir dos passos continuam."
+        description="A anotação deixa de aparecer. Os combinados criados a partir dela continuam na aba Combinados."
         confirmLabel="Excluir"
         cancelLabel="Cancelar"
         isBusy={remove.isPending}
