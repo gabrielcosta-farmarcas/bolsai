@@ -148,7 +148,7 @@ function Roteiro({ content }: { content: PreparationContent }) {
         className="bg-primary-subtle mt-6 rounded-lg p-5"
       >
         <h2 className="text-h3">Perguntas para o encontro</h2>
-        <ol className="max-w-reading mt-3 grid list-decimal gap-3 pl-5">
+        <ol className="mt-3 grid list-decimal gap-3 pl-5">
           {content.questions.map((question) => (
             <li key={question}>{question}</li>
           ))}
