@@ -138,13 +138,20 @@ const validateOutput = (
   const parsed = preparationOutputSchema.safeParse(json);
   if (!parsed.success) return { ok: false, reason: describeZodError(parsed.error) };
   const count = parsed.data.questions.length;
-  if (count < MIN_QUESTIONS || count > MAX_QUESTIONS) {
+  if (count < MIN_QUESTIONS) {
     return {
       ok: false,
-      reason: `questions tem ${count} itens; use de ${MIN_QUESTIONS} a ${MAX_QUESTIONS}`,
+      reason: `questions tem ${count} itens; use ${MAX_QUESTIONS}`,
     };
   }
-  return { ok: true, value: { ...parsed.data, themes: parsed.data.themes.slice(0, MAX_THEMES) } };
+  return {
+    ok: true,
+    value: {
+      ...parsed.data,
+      themes: parsed.data.themes.slice(0, MAX_THEMES),
+      questions: parsed.data.questions.slice(0, MAX_QUESTIONS),
+    },
+  };
 };
 
 export const makePreparationsService = (deps: Deps) => {

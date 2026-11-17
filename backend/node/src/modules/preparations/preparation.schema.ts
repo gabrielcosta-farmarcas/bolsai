@@ -2,11 +2,11 @@ import { z } from 'zod';
 import { agreementOwnerSchema } from '../analyses/analysis.schema.js';
 
 export const MIN_QUESTIONS = 3;
-export const MAX_QUESTIONS = 5;
+export const MAX_QUESTIONS = 3;
 export const MAX_THEMES = 4;
 
-// Saída que a IA deve produzir (português do Brasil). As quantidades são conferidas no service,
-// com uma nova tentativa se vierem fora do limite.
+// Saída que a IA deve produzir (português do Brasil). As quantidades são conferidas no service:
+// poucas perguntas pedem uma nova tentativa; sobrando, o servidor fica com as primeiras.
 export const preparationOutputSchema = z.object({
   themes: z.array(z.object({ title: z.string().min(1), detail: z.string() })),
   questions: z.array(z.string().min(1)),

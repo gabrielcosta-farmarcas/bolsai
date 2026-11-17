@@ -210,7 +210,7 @@ describe('preparations service', () => {
     expect(fake.calls[0]?.user).toContain('R1: Texto de Atendimento');
   });
 
-  it('deve tentar de novo quando a IA devolve fora de 3 a 5 perguntas', async () => {
+  it('deve tentar de novo quando a IA devolve menos de 3 perguntas', async () => {
     const { service, fake, stored, runJobs } = setup([
       { ...validOutput, questions: ['Só uma?'] },
       validOutput,
@@ -222,6 +222,18 @@ describe('preparations service', () => {
     expect(fake.calls).toHaveLength(2);
     expect(fake.calls[1]?.user).toContain('A resposta anterior foi inválida');
     expect((stored.content as { questions: string[] }).questions).toHaveLength(3);
+  });
+
+  it('deve ficar só com as 3 primeiras quando a IA devolve mais de 3 perguntas, sem nova tentativa', async () => {
+    const { service, fake, stored, runJobs } = setup([
+      { ...validOutput, questions: ['P1?', 'P2?', 'P3?', 'P4?', 'P5?'] },
+    ]);
+
+    await service.start(user, REPORT);
+    await runJobs();
+
+    expect(fake.calls).toHaveLength(1);
+    expect((stored.content as { questions: string[] }).questions).toEqual(['P1?', 'P2?', 'P3?']);
   });
 
   it('deve marcar falha quando a IA erra duas vezes o formato', async () => {
